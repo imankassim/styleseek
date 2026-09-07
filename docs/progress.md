@@ -18,7 +18,7 @@ progress from git log alone.
 | 9 | Understand queries | Done | Deterministic parser (colour/gender/price as hard filters; category/occasion measured and deliberately excluded from filtering — see risk register). Live `/search` model version `bm25_opensearch_synonyms_qu_v1`. 69/69 tests pass, interpretation surfaced in the UI |
 | 10 | Add semantic retrieval | Done | G6 met — title-only embeddings (EXP22, `BAAI/bge-small-en-v1.5` via fastembed) are the best representation; not competitive as a standalone ranker (ndcg@10 0.293 vs BM25's 0.755) but found relevant candidates BM25 missed entirely on 5/15 queries (EXP30). 93/93 tests pass |
 | 11 | Build hybrid retrieval | Done | G7 met — EXP34 (90/10 weighted BM25+vector fusion) beats BM25 alone on ndcg@10 (+1.3%) and recall@50 (+4.0%) simultaneously, sub-second latency (~650ms). Live `/search` model version `hybrid_weighted_fusion_v1`, two-tier fallback. 95/95 tests pass |
-| 12 | Guarantee safety | Not started | — |
+| 12 | Guarantee safety | Done | Size extraction added to query understanding; stock/size eligibility (unconditional `in_stock` filter, per-size stock confirmed against Postgres) and post-fusion duplicate control ((title, category, colour) dedup) wired into live `/search`. 110/110 tests pass |
 | 13 | Train learned ranking | Not started | G8 |
 | 14 | Add bounded context | Not started | G9 |
 | 15 | Operationalise | Not started | G10 |
@@ -46,8 +46,11 @@ progress from git log alone.
 - Known gap, deliberately not fixed yet, and worse than it was at Stage 8: `/search` always
   returns *something*, even for a genuinely no-result query — vector kNN has no concept of "no
   match" at all (BM25 alone could at least occasionally score zero). See
-  `tests/search_regression/test_search_regression.py`. A minimum-relevance cutoff is Stage 12
-  (eligibility) work.
+  `tests/search_regression/test_search_regression.py`. **Still open after Stage 12**: that
+  stage's eligibility work was stock/size (a product either qualifies or doesn't) and duplicate
+  control, not a minimum-relevance score cutoff — the two are different problems. A relevance
+  threshold hasn't been scheduled to a specific later stage; revisit if it becomes a real
+  nuisance rather than a theoretical gap.
 - Live `/search` now serves hybrid BM25+vector fusion (`hybrid_weighted_fusion_v1`, Stage 11).
   Vector index: `styleseek_products_v3_vectors` (title/metadata/structured vector fields), built
   by `python search/index_vectors.py`. Rebuilding the full catalogue's embeddings takes roughly
@@ -59,3 +62,10 @@ progress from git log alone.
   `requests` (and some other clients) try IPv6 `::1` first, time out, then fall back to IPv4,
   adding 1-2+ seconds per request that has nothing to do with the backend. Use `127.0.0.1`
   directly to get a true reading. The browser/frontend's own `fetch()` isn't affected.
+- Stage 12's eligibility/dedup work was **not** re-measured against `evaluation/metrics.py`'s
+  harness the way every EXP-numbered comparison in Stages 8/10/11 was — it isn't one of
+  architecture §14's planned comparison experiments, and removing exact-duplicate/out-of-stock
+  items from a page of results has an obvious direction of effect (frees result slots for
+  distinct, available products) rather than a genuine trade-off worth a formal before/after
+  measurement. Flagging this explicitly as a scope choice, not an oversight — if a future stage
+  needs precise numbers here, they don't exist yet.
