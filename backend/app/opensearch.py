@@ -31,15 +31,49 @@ def mark_unavailable() -> None:
     _unavailable = True
 
 
-def search(client: OpenSearch, query: str, limit: int) -> list[dict]:
+def _build_filters(parsed) -> list[dict]:
+    """parsed: app.query_understanding.ParsedQuery. Hard constraints (architecture "hard
+    constraints before soft preference") — these gate the candidate set, they don't affect
+    relevance scoring, which still runs on the full original query text.
+
+    Only colour, gender and price are applied as hard filters. Measured directly (Stage 9,
+    against the full train+val judgment set) that they're the only extracted attributes that
+    are genuinely unambiguous — a colour or a price cap means exactly one thing regardless of
+    context. category and occasion were both tried and both measurably hurt overall ndcg@10
+    (category: 0.759 -> 0.660; the category word in a query is often used loosely rather than as
+    a strict product-category constraint — e.g. "nike running shoes" also validly matches Nike
+    running *apparel* in this catalogue's own graded judgments, and "wedding guest **dress**"
+    excluded every graded-relevant wedding sari once hard-filtered to category=dress). occasion
+    was rejected for a similar but even sharper reason: every real "blazer" product is tagged
+    occasion=Formal or Casual, never literally "Smart Casual", so filtering "smart casual
+    blazer" on occasion excluded every genuine blazer result outright. Both remain in the
+    response's `interpretation` for transparency and still reach ranking as free text (occasion
+    is one of the boosted multi_match fields) — just never as a filter. Real category/occasion
+    understanding is exactly what Stage 10's semantic retrieval exists to add without this
+    literal-word brittleness.
+    """
+    filters: list[dict] = []
+    if parsed.colour:
+        filters.append({"term": {"colours": parsed.colour}})
+    if parsed.gender:
+        filters.append({"term": {"gender": parsed.gender}})
+    if parsed.max_price is not None:
+        filters.append({"range": {"price": {"lte": parsed.max_price}}})
+    return filters
+
+
+def search(client: OpenSearch, query: str, limit: int, parsed=None) -> list[dict]:
+    bool_query: dict = {
+        "must": [{"multi_match": {"query": query, "type": "cross_fields", "fields": BOOSTED_FIELDS}}]
+    }
+    if parsed is not None:
+        filters = _build_filters(parsed)
+        if filters:
+            bool_query["filter"] = filters
+
     resp = client.search(
         index=INDEX_NAME,
-        body={
-            "query": {
-                "multi_match": {"query": query, "type": "cross_fields", "fields": BOOSTED_FIELDS}
-            },
-            "size": limit,
-        },
+        body={"query": {"bool": bool_query}, "size": limit},
         request_timeout=3,
     )
     return [hit["_source"] for hit in resp["hits"]["hits"]]

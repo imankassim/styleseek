@@ -2,7 +2,14 @@
 
 Primary path: OpenSearch BM25, synonym-enabled index + boosted cross_fields query — the
 configuration EXP14 (experiments/EXP14_synonym_expansion) measured as the best lexical baseline
-(ndcg@10 0.755 vs EXP10's Postgres comparison at 0.355). model_version `bm25_opensearch_synonyms_v1`.
+(ndcg@10 0.755 vs EXP10's Postgres comparison at 0.355).
+
+Stage 9 adds query understanding (app/query_understanding.py): a deterministic parser extracts
+category/colour/occasion/gender/max_price from the free text, validated only against the
+catalogue's own controlled vocabulary. Extracted attributes become hard filters applied
+alongside — not instead of — the full free-text query, on both the OpenSearch path and the
+Postgres fallback (architecture "hard constraints before soft preference" applies regardless of
+which engine actually serves the request). model_version `bm25_opensearch_synonyms_qu_v1`.
 
 Fallback path: if OpenSearch is unavailable, falls back to the Stage 5 Postgres token-intersection
 placeholder (architecture §10, "OpenSearch unavailable: return a controlled service error or an
@@ -10,7 +17,6 @@ explicitly defined limited fallback — do not display unrelated products as sea
 `fallback_used=True` and `model_version` reflect what actually served the response, not just
 what was requested — architecture §11 auditability.
 
-No query understanding yet (`interpretation` is always null) — that's Stage 9.
 No semantic/hybrid retrieval yet — Stages 10-11.
 
 Every request is logged to `search_request` (architecture §8.1), tagged with an anonymous
@@ -28,13 +34,14 @@ from psycopg import Connection
 
 from app import opensearch
 from app.db import get_connection
-from app.schemas import ProductResult, SearchResponse
+from app.query_understanding import ParsedQuery, parse_query
+from app.schemas import ProductResult, QueryInterpretation, SearchResponse
 from app.session import get_session_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-OPENSEARCH_MODEL_VERSION = "bm25_opensearch_synonyms_v1"
+OPENSEARCH_MODEL_VERSION = "bm25_opensearch_synonyms_qu_v1"
 FALLBACK_MODEL_VERSION = "token_intersection_postgres_v0"
 RESULT_LIMIT = 24
 
@@ -44,14 +51,14 @@ def _score_expr(num_tokens: int) -> str:
     return " + ".join(clauses) if clauses else "0"
 
 
-def _search_opensearch(query: str, limit: int) -> list[ProductResult] | None:
+def _search_opensearch(query: str, limit: int, parsed: ParsedQuery) -> list[ProductResult] | None:
     """Returns None (not an exception) on any failure — the caller falls back to Postgres."""
     client = opensearch.get_client()
     if client is None:
         return None
 
     try:
-        docs = opensearch.search(client, query, limit)
+        docs = opensearch.search(client, query, limit, parsed=parsed)
     except OpenSearchException:
         logger.warning("OpenSearch query failed, falling back to Postgres", exc_info=True)
         opensearch.mark_unavailable()
@@ -73,10 +80,30 @@ def _search_opensearch(query: str, limit: int) -> list[ProductResult] | None:
     ]
 
 
-def _search_postgres_fallback(conn: Connection, query: str, limit: int) -> list[ProductResult]:
+def _search_postgres_fallback(
+    conn: Connection, query: str, limit: int, parsed: ParsedQuery
+) -> list[ProductResult]:
     tokens = [t for t in query.lower().split() if t]
     token_patterns = [f"%{t}%" for t in tokens]
     score_sql = _score_expr(len(tokens))
+
+    # Same hard constraints as the OpenSearch path (app/opensearch.py's _build_filters) —
+    # architecture's "hard constraints before soft preference" isn't optional just because
+    # we're on the fallback engine. Only colour/gender/price — category and occasion are
+    # deliberately excluded, see app/opensearch.py's _build_filters docstring for the measured
+    # reason (both hurt overall ndcg@10 when tried as hard filters).
+    filter_conditions = []
+    filter_params: list = []
+    if parsed.colour:
+        filter_conditions.append("pc.colour = %s")
+        filter_params.append(parsed.colour)
+    if parsed.gender:
+        filter_conditions.append("p.gender = %s")
+        filter_params.append(parsed.gender)
+    if parsed.max_price is not None:
+        filter_conditions.append("p.price <= %s")
+        filter_params.append(parsed.max_price)
+    filter_sql = ("AND " + " AND ".join(filter_conditions)) if filter_conditions else ""
 
     sql = f"""
         WITH product_colour AS (
@@ -94,6 +121,7 @@ def _search_postgres_fallback(conn: Connection, query: str, limit: int) -> list[
                 ) AS searchable_text
             FROM product p
             JOIN product_colour pc ON pc.product_id = p.product_id
+            WHERE TRUE {filter_sql}
         ),
         scored AS (
             SELECT product_id, title, brand, category, price, image_filename, colour,
@@ -112,10 +140,10 @@ def _search_postgres_fallback(conn: Connection, query: str, limit: int) -> list[
                  sc.colour, sc.score
         ORDER BY sc.score DESC, sc.product_id
         LIMIT %s
-    """
+    """  # noqa: S608 -- filter_sql is built from a fixed set of literal clauses, not user input
 
     with conn.cursor() as cur:
-        cur.execute(sql, [*token_patterns, limit])
+        cur.execute(sql, [*filter_params, *token_patterns, limit])
         rows = cur.fetchall()
 
     return [
@@ -140,6 +168,7 @@ def _log_search_request(
     search_request_id: str,
     session_id: str,
     query: str,
+    interpretation: dict | None,
     model_version: str,
     fallback_used: bool,
     result_count: int,
@@ -157,7 +186,7 @@ def _log_search_request(
                 search_request_id,
                 session_id,
                 query,
-                json.dumps(None),
+                json.dumps(interpretation),
                 model_version,
                 fallback_used,
                 result_count,
@@ -181,13 +210,25 @@ def search(
     results: list[ProductResult] = []
     model_version = OPENSEARCH_MODEL_VERSION
     fallback_used = False
+    parsed = ParsedQuery()
+    interpretation: QueryInterpretation | None = None
 
     if query:
-        opensearch_results = _search_opensearch(query, RESULT_LIMIT)
+        parsed = parse_query(query)
+        if not parsed.is_empty():
+            interpretation = QueryInterpretation(
+                category=parsed.category,
+                range=None,  # not extracted — no controlled "range"/fit vocabulary in this catalogue
+                colour=parsed.colour,
+                occasion=parsed.occasion,
+                max_price=parsed.max_price,
+            )
+
+        opensearch_results = _search_opensearch(query, RESULT_LIMIT, parsed)
         if opensearch_results is not None:
             results = opensearch_results
         else:
-            results = _search_postgres_fallback(conn, query, RESULT_LIMIT)
+            results = _search_postgres_fallback(conn, query, RESULT_LIMIT, parsed)
             model_version = FALLBACK_MODEL_VERSION
             fallback_used = True
 
@@ -197,6 +238,7 @@ def search(
         search_request_id=search_request_id,
         session_id=session_id,
         query=query,
+        interpretation=interpretation.model_dump() if interpretation else None,
         model_version=model_version,
         fallback_used=fallback_used,
         result_count=len(results),
@@ -206,7 +248,7 @@ def search(
     return SearchResponse(
         search_request_id=search_request_id,
         query=query,
-        interpretation=None,
+        interpretation=interpretation,
         model_version=model_version,
         fallback_used=fallback_used,
         results=results,

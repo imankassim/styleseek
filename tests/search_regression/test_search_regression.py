@@ -73,6 +73,30 @@ def test_empty_query_returns_no_results_not_an_error(client):
     assert resp.json()["results"] == []
 
 
+def test_price_constraint_is_enforced(client):
+    resp = client.get("/search", params={"q": "red dress under £50"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["interpretation"]["colour"] == "Red"
+    assert body["interpretation"]["max_price"] == 50.0
+    assert len(body["results"]) > 0
+    assert all(r["price"] <= 50.0 for r in body["results"])
+    assert all(r["colour"] == "Red" for r in body["results"])
+
+
+def test_category_is_not_hard_filtered(client):
+    """Regression-protects a specific, measured Stage 9 finding: hard-filtering on the
+    extracted category word regressed overall ndcg@10 from 0.766 to 0.660 on the judgment set
+    (e.g. it excluded every graded-relevant wedding saree for "wedding guest dress", because
+    the catalogue only tags those as category=saree, not category=dress). category is still
+    extracted and shown in `interpretation`, just never used as a filter."""
+    resp = client.get("/search", params={"q": "wedding guest dress"})
+    body = resp.json()
+    assert body["interpretation"]["category"] == "dress"
+    titles = [r["title"] for r in body["results"][:10]]
+    assert any("wedding" in t.lower() for t in titles)
+
+
 def test_every_response_carries_a_traceable_version(client):
     """Every result response includes a search request ID and model/configuration version
     (FR-04) — checked as a regression, not just in the general contract test, because a
@@ -81,4 +105,4 @@ def test_every_response_carries_a_traceable_version(client):
     resp = client.get("/search", params={"q": "nike"})
     body = resp.json()
     assert body["search_request_id"].startswith("srch_")
-    assert body["model_version"] in ("bm25_opensearch_synonyms_v1", "token_intersection_postgres_v0")
+    assert body["model_version"] in ("bm25_opensearch_synonyms_qu_v1", "token_intersection_postgres_v0")
