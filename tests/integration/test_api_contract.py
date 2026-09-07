@@ -133,3 +133,90 @@ def test_product_detail_found(client):
 def test_product_detail_not_found(client):
     resp = client.get("/products/does-not-exist-xyz")
     assert resp.status_code == 404
+
+
+def test_search_sets_session_cookie(client):
+    # Clear the shared client's jar rather than opening a second TestClient — the connection
+    # pool is a module-level singleton in app.db, and a second `with TestClient(app)` would
+    # close it out from under this module-scoped fixture on exit.
+    client.cookies.clear()
+    resp = client.get("/search", params={"q": "nike"})
+    assert "styleseek_session" in resp.cookies
+
+
+def test_search_reuses_existing_session_cookie(client):
+    client.cookies.clear()
+    first = client.get("/search", params={"q": "nike"})
+    session_id = first.cookies["styleseek_session"]
+
+    second = client.get("/search", params={"q": "black"})
+    assert "styleseek_session" not in second.cookies  # not re-set, already had it
+    assert client.cookies["styleseek_session"] == session_id
+
+
+def test_events_batch_recorded(client):
+    search_resp = client.get("/search", params={"q": "nike"})
+    search_request_id = search_resp.json()["search_request_id"]
+    product_id = search_resp.json()["results"][0]["product_id"]
+
+    resp = client.post(
+        "/events",
+        json={
+            "events": [
+                {
+                    "event_type": "impression",
+                    "search_request_id": search_request_id,
+                    "product_id": product_id,
+                    "position": 0,
+                },
+                {
+                    "event_type": "click",
+                    "search_request_id": search_request_id,
+                    "product_id": product_id,
+                    "position": 0,
+                },
+            ]
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"recorded": 2}
+
+
+def test_events_batch_skips_invalid_rows_without_failing_valid_ones(client):
+    search_resp = client.get("/search", params={"q": "nike"})
+    search_request_id = search_resp.json()["search_request_id"]
+    product_id = search_resp.json()["results"][0]["product_id"]
+
+    resp = client.post(
+        "/events",
+        json={
+            "events": [
+                {
+                    "event_type": "impression",
+                    "search_request_id": search_request_id,
+                    "product_id": product_id,
+                    "position": 0,
+                },
+                {
+                    "event_type": "impression",
+                    "search_request_id": search_request_id,
+                    "product_id": "does-not-exist-xyz",
+                    "position": 1,
+                },
+            ]
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"recorded": 1}
+
+
+def test_events_batch_all_invalid_returns_422(client):
+    resp = client.post(
+        "/events",
+        json={
+            "events": [
+                {"event_type": "impression", "product_id": "does-not-exist-xyz", "position": 0},
+            ]
+        },
+    )
+    assert resp.status_code == 422

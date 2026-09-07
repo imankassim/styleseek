@@ -1,9 +1,9 @@
 """GET /search.
 
-Stage 5 scope only: wire a real, working page-to-Python-to-database path (architecture journey
-5 exit outcome). The retrieval method here is deliberately the *same* token-intersection
-approach validated (and found wanting) as EXP2 against the mock fixture in Stage 3 — now run as
-real SQL against the real catalogue — not a new invention. It is explicitly a placeholder:
+Stage 5 scope: wire a real, working page-to-Python-to-database path (architecture journey 5
+exit outcome). The retrieval method here is deliberately the *same* token-intersection approach
+validated (and found wanting) as EXP2 against the mock fixture in Stage 3 — now run as real SQL
+against the real catalogue — not a new invention. It is explicitly a placeholder:
 
   - No query understanding yet (`interpretation` is always null) — that's Stage 9.
   - No BM25/OpenSearch yet — EXP10 (Postgres full-text) and BM25 tuning are Stage 8.
@@ -11,15 +11,22 @@ real SQL against the real catalogue — not a new invention. It is explicitly a 
 
 model_version is versioned accordingly (`token_intersection_postgres_v0`) so later stages can be
 measured as an explicit improvement over this baseline, not just assumed better.
+
+Stage 7 adds instrumentation: every request is logged to `search_request` (architecture §8.1),
+tagged with an anonymous session id (architecture §11 privacy), for later evaluation (Stage 8)
+and event correlation (impressions/clicks, recorded via POST /events).
 """
 
+import json
+import time
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from psycopg import Connection
 
 from app.db import get_connection
 from app.schemas import ProductResult, SearchResponse
+from app.session import get_session_id
 
 router = APIRouter()
 
@@ -32,15 +39,62 @@ def _score_expr(num_tokens: int) -> str:
     return " + ".join(clauses) if clauses else "0"
 
 
+def _log_search_request(
+    conn: Connection,
+    *,
+    search_request_id: str,
+    session_id: str,
+    query: str,
+    model_version: str,
+    fallback_used: bool,
+    result_count: int,
+    latency_ms: int,
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO search_request (
+                search_request_id, session_id, query, interpretation, model_version,
+                fallback_used, result_count, latency_ms
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                search_request_id,
+                session_id,
+                query,
+                json.dumps(None),
+                model_version,
+                fallback_used,
+                result_count,
+                latency_ms,
+            ),
+        )
+    conn.commit()
+
+
 @router.get("/search", response_model=SearchResponse)
 def search(
+    response: Response,
     q: str = Query(default="", max_length=200),
     conn: Connection = Depends(get_connection),
+    session_id: str = Depends(get_session_id),
 ) -> SearchResponse:
+    started_at = time.perf_counter()
     search_request_id = f"srch_{uuid.uuid4().hex[:10]}"
     query = q.strip()
 
     if not query:
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        _log_search_request(
+            conn,
+            search_request_id=search_request_id,
+            session_id=session_id,
+            query=query,
+            model_version=MODEL_VERSION,
+            fallback_used=False,
+            result_count=0,
+            latency_ms=latency_ms,
+        )
         return SearchResponse(
             search_request_id=search_request_id,
             query=query,
@@ -110,6 +164,18 @@ def search(
         )
         for row in rows
     ]
+
+    latency_ms = int((time.perf_counter() - started_at) * 1000)
+    _log_search_request(
+        conn,
+        search_request_id=search_request_id,
+        session_id=session_id,
+        query=query,
+        model_version=MODEL_VERSION,
+        fallback_used=False,
+        result_count=len(results),
+        latency_ms=latency_ms,
+    )
 
     return SearchResponse(
         search_request_id=search_request_id,
