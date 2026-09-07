@@ -10,6 +10,7 @@ type ApiSearchResponse = {
     colour: string | null;
     occasion: string | null;
     max_price: number | null;
+    size: string | null;
   } | null;
   model_version: string;
   fallback_used: boolean;
@@ -29,6 +30,7 @@ export async function searchProducts(query: string): Promise<SearchResponse> {
           colour: data.interpretation.colour,
           occasion: data.interpretation.occasion,
           maxPrice: data.interpretation.max_price,
+          size: data.interpretation.size,
         }
       : null,
     modelVersion: data.model_version,

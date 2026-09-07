@@ -26,6 +26,7 @@ export type QueryInterpretation = {
   colour: string | null;
   occasion: string | null;
   maxPrice: number | null;
+  size: string | null;
 } | null;
 
 export type SearchResponse = {

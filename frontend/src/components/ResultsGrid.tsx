@@ -17,6 +17,7 @@ function InterpretationChips({ interpretation }: { interpretation: SearchRespons
     interpretation.category && `category: ${interpretation.category}`,
     interpretation.colour && `colour: ${interpretation.colour}`,
     interpretation.occasion && `occasion: ${interpretation.occasion}`,
+    interpretation.size && `size: ${interpretation.size}`,
     interpretation.maxPrice != null && `under £${interpretation.maxPrice}`,
   ].filter(Boolean) as string[];
 
