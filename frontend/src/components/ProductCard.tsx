@@ -2,11 +2,12 @@ import Link from "next/link";
 
 import type { Product } from "@/types/product";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, onClick }: { product: Product; onClick?: () => void }) {
   return (
     <li className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
       <Link
         href={`/products/${encodeURIComponent(product.productId)}`}
+        onClick={onClick}
         className="flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
       >
         <div

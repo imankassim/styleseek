@@ -37,7 +37,25 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
     }
   }
 
-  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  const response = await fetch(url, {
+    credentials: "include", // send/receive the anonymous session cookie (backend/app/session.py)
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Request to ${path} failed (${response.status}).`);
+  }
+  return response.json();
+}
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const url = new URL(path, API_BASE_URL);
+  const response = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!response.ok) {
     throw new Error(`Request to ${path} failed (${response.status}).`);
   }

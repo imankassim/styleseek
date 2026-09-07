@@ -1,5 +1,8 @@
+import { useEffect, useRef } from "react";
+
 import type { SearchResponse } from "@/types/product";
 import { ProductCard } from "@/components/ProductCard";
+import { recordEvents } from "@/lib/events-api";
 
 export type SearchState =
   | { status: "idle" }
@@ -30,6 +33,23 @@ export function ResultsGrid({
   state: SearchState;
   onRetry: () => void;
 }) {
+  const impressedFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (state.status !== "success" || state.response.results.length === 0) return;
+    if (impressedFor.current === state.response.searchRequestId) return;
+    impressedFor.current = state.response.searchRequestId;
+
+    recordEvents(
+      state.response.results.map((product, index) => ({
+        eventType: "impression",
+        searchRequestId: state.response.searchRequestId,
+        productId: product.productId,
+        position: index,
+      })),
+    );
+  }, [state]);
+
   return (
     <div aria-live="polite" className="w-full max-w-5xl">
       {state.status === "idle" && (
@@ -74,8 +94,21 @@ export function ResultsGrid({
 
       {state.status === "success" && state.response.results.length > 0 && (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {state.response.results.map((product) => (
-            <ProductCard key={product.productId} product={product} />
+          {state.response.results.map((product, index) => (
+            <ProductCard
+              key={product.productId}
+              product={product}
+              onClick={() =>
+                recordEvents([
+                  {
+                    eventType: "click",
+                    searchRequestId: state.response.searchRequestId,
+                    productId: product.productId,
+                    position: index,
+                  },
+                ])
+              }
+            />
           ))}
         </ul>
       )}
