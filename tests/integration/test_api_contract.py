@@ -220,3 +220,18 @@ def test_events_batch_all_invalid_returns_422(client):
         },
     )
     assert resp.status_code == 422
+
+
+def test_search_falls_back_to_postgres_when_opensearch_unavailable(client, monkeypatch):
+    """Failure injection (architecture §15, §10 'OpenSearch unavailable') — the shopper still
+    gets real results, just from the documented fallback path, not an error."""
+    import app.opensearch as opensearch_module
+
+    monkeypatch.setattr(opensearch_module, "get_client", lambda: None)
+
+    resp = client.get("/search", params={"q": "nike"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["fallback_used"] is True
+    assert body["model_version"] == "token_intersection_postgres_v0"
+    assert len(body["results"]) > 0  # still genuinely useful, not empty
