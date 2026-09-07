@@ -1,20 +1,22 @@
 /**
  * Shared with the documented `/search` response contract
- * (docs/architecture/STYLESEEK_ARCHITECTURE.md §7). The frontend commits to this shape now,
- * before the real API exists, so later stages (5: connect the application) swap the data
- * source without changing the UI.
+ * (docs/architecture/STYLESEEK_ARCHITECTURE.md §7). Populated from the real FastAPI backend
+ * (see src/lib/search-api.ts) as of Stage 5.
  */
 
 export type Product = {
   productId: string;
   title: string;
-  brand: string;
+  brand: string | null;
   category: string;
   colour: string;
   price: number;
   currency: "GBP";
   sizes: string[];
   inStock: boolean;
+  // Derived from title/brand, not the real dataset photo — the catalogue's image licence isn't
+  // confirmed yet (docs/data_sheets/catalogue_data_sheet.md), so the UI still shows a
+  // placeholder block rather than serving real images.
   imageAlt: string;
 };
 

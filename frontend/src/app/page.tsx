@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 
 import { SearchBar } from "@/components/SearchBar";
 import { ResultsGrid, type SearchState } from "@/components/ResultsGrid";
-import { searchProductsMock } from "@/lib/mock-search";
+import { searchProducts } from "@/lib/search-api";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
@@ -17,7 +17,7 @@ export default function HomePage() {
     }
 
     setState({ status: "loading" });
-    searchProductsMock(submittedQuery)
+    searchProducts(submittedQuery)
       .then((response) => setState({ status: "success", response }))
       .catch((error: unknown) =>
         setState({

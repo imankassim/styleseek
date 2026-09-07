@@ -11,7 +11,9 @@ export function ProductCard({ product }: { product: Product }) {
         Image placeholder
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
-        <p className="text-xs uppercase tracking-wide text-neutral-500">{product.brand}</p>
+        {product.brand && (
+          <p className="text-xs uppercase tracking-wide text-neutral-500">{product.brand}</p>
+        )}
         <h3 className="text-sm font-medium text-neutral-900">{product.title}</h3>
         <p className="text-sm text-neutral-700">
           £{product.price.toFixed(2)} · {product.colour}
