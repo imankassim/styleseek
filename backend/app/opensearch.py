@@ -1,5 +1,7 @@
 """OpenSearch client for the live /search endpoint. Serving config chosen by EXP14
-(experiments/EXP14_synonym_expansion) — synonym-enabled index, cross_fields + boosted fields.
+(experiments/EXP14_synonym_expansion) — synonym-enabled BM25 index, cross_fields + boosted
+fields — combined with semantic vector search (app/semantic.py) via weighted score fusion
+(EXP34, Stage 11).
 """
 
 from opensearchpy import OpenSearch
@@ -22,7 +24,7 @@ def get_client() -> OpenSearch | None:
         if url is None:
             _unavailable = True
             return None
-        _client = OpenSearch(hosts=[url], use_ssl=True, verify_certs=True, timeout=3)
+        _client = OpenSearch(hosts=[url], use_ssl=True, verify_certs=True, timeout=5)
     return _client
 
 
@@ -31,10 +33,12 @@ def mark_unavailable() -> None:
     _unavailable = True
 
 
-def _build_filters(parsed) -> list[dict]:
+def build_filters(parsed) -> list[dict]:
     """parsed: app.query_understanding.ParsedQuery. Hard constraints (architecture "hard
     constraints before soft preference") — these gate the candidate set, they don't affect
-    relevance scoring, which still runs on the full original query text.
+    relevance scoring, which still runs on the full original query text. Shared by both the
+    BM25 query (app/opensearch.py) and the vector query (app/semantic.py) — a hard constraint
+    must hold regardless of which retrieval method is finding the candidate.
 
     Only colour, gender and price are applied as hard filters. Measured directly (Stage 9,
     against the full train+val judgment set) that they're the only extracted attributes that
@@ -62,18 +66,29 @@ def _build_filters(parsed) -> list[dict]:
     return filters
 
 
-def search(client: OpenSearch, query: str, limit: int, parsed=None) -> list[dict]:
+def search_with_scores(client: OpenSearch, query: str, limit: int, parsed=None) -> list[dict]:
+    """Like search(), but each returned dict also carries `_bm25_score` — needed for fusion
+    (app/routers/search.py), not just plain display."""
     bool_query: dict = {
         "must": [{"multi_match": {"query": query, "type": "cross_fields", "fields": BOOSTED_FIELDS}}]
     }
     if parsed is not None:
-        filters = _build_filters(parsed)
+        filters = build_filters(parsed)
         if filters:
             bool_query["filter"] = filters
 
     resp = client.search(
         index=INDEX_NAME,
         body={"query": {"bool": bool_query}, "size": limit},
-        request_timeout=3,
+        request_timeout=5,
     )
-    return [hit["_source"] for hit in resp["hits"]["hits"]]
+    results = []
+    for hit in resp["hits"]["hits"]:
+        doc = dict(hit["_source"])
+        doc["_bm25_score"] = hit["_score"]
+        results.append(doc)
+    return results
+
+
+def search(client: OpenSearch, query: str, limit: int, parsed=None) -> list[dict]:
+    return search_with_scores(client, query, limit, parsed)

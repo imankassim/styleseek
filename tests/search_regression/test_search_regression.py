@@ -53,15 +53,17 @@ def test_synonym_vocabulary_gap_is_covered(client):
 
 
 def test_no_result_query_behaviour_is_a_known_gap_not_a_silent_regression(client):
-    """Known, named gap (architecture §2.3 "no-result recovery" journey): plain BM25 has no
-    concept of "nothing actually matches the full query" — it ranks by cumulative term
-    evidence and always returns *something* with a non-trivial score (verified directly:
-    "purple waterproof tuxedo" top hits score 14.7/13.8 from "waterproof"/"purple" alone, e.g.
-    "Colorbar Precision Waterproof Eye Liner"). This differs from EXP1's naive whole-query
-    substring baseline (Stage 3), which got true negatives "for free" by being maximally
-    strict. This test documents current behaviour so a future change is a deliberate decision,
-    not a silent regression discovered by accident — fixing it for real is Stage 9 (query
-    understanding) / Stage 12 (eligibility) work, not Stage 8's."""
+    """Known, named gap (architecture §2.3 "no-result recovery" journey), and worse as of
+    Stage 11 than it was at Stage 8: BM25 alone at least has *some* concept of "no term
+    overlap" (a maximally strict query can score zero); vector kNN has none at all — it always
+    returns its k nearest neighbours no matter how irrelevant they are, so a fused hybrid result
+    can never come back truly empty even for pure gibberish (see
+    tests/integration/test_api_contract.py::test_search_nonsense_query_returns_something_not_an_error).
+    "purple waterproof tuxedo" top hits still score high on "waterproof"/"purple" alone, e.g.
+    "Colorbar Precision Waterproof Eye Liner". This test documents current behaviour so a
+    future change is a deliberate decision, not a silent regression discovered by accident —
+    fixing it for real is Stage 12 (eligibility: a minimum-relevance cutoff) work, not Stage
+    8/11's."""
     resp = client.get("/search", params={"q": "purple waterproof tuxedo"})
     assert resp.status_code == 200
     assert len(resp.json()["results"]) > 0
@@ -105,4 +107,8 @@ def test_every_response_carries_a_traceable_version(client):
     resp = client.get("/search", params={"q": "nike"})
     body = resp.json()
     assert body["search_request_id"].startswith("srch_")
-    assert body["model_version"] in ("bm25_opensearch_synonyms_qu_v1", "token_intersection_postgres_v0")
+    assert body["model_version"] in (
+        "hybrid_weighted_fusion_v1",
+        "bm25_opensearch_synonyms_qu_v1",
+        "token_intersection_postgres_v0",
+    )

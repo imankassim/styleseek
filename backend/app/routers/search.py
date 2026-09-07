@@ -1,26 +1,23 @@
 """GET /search.
 
-Primary path: OpenSearch BM25, synonym-enabled index + boosted cross_fields query — the
-configuration EXP14 (experiments/EXP14_synonym_expansion) measured as the best lexical baseline
-(ndcg@10 0.755 vs EXP10's Postgres comparison at 0.355).
+Primary path (Stage 11): BM25 (EXP14's config) and semantic vector search (EXP22/30's config),
+combined via weighted score fusion at 90/10 lexical/semantic — the configuration EXP34 measured
+beating BM25 alone on both ndcg@10 (+1.3%) and recall@50 (+4.0%) at once. model_version
+`hybrid_weighted_fusion_v1`. Retrieved sequentially, not in parallel — see the note in
+_search_hybrid: parallelising with a ThreadPoolExecutor was tried and measured *slower* here.
 
-Stage 9 adds query understanding (app/query_understanding.py): a deterministic parser extracts
-category/colour/occasion/gender/max_price from the free text, validated only against the
-catalogue's own controlled vocabulary. Extracted attributes become hard filters applied
-alongside — not instead of — the full free-text query, on both the OpenSearch path and the
-Postgres fallback (architecture "hard constraints before soft preference" applies regardless of
-which engine actually serves the request). model_version `bm25_opensearch_synonyms_qu_v1`.
+Two-tier fallback, each reflected honestly in `model_version`/`fallback_used` (architecture §11
+auditability — the response says what actually served it, not just what was attempted):
+  - Vector search unavailable/fails -> BM25-only (architecture §10, "Vector index unavailable:
+    run lexical retrieval and omit semantic contribution"). model_version reverts to Stage 9's
+    BM25+query-understanding version.
+  - OpenSearch itself unavailable -> the Stage 5 Postgres token-intersection placeholder
+    (architecture §10, "OpenSearch unavailable: ...an explicitly defined limited fallback").
 
-Fallback path: if OpenSearch is unavailable, falls back to the Stage 5 Postgres token-intersection
-placeholder (architecture §10, "OpenSearch unavailable: return a controlled service error or an
-explicitly defined limited fallback — do not display unrelated products as search results").
-`fallback_used=True` and `model_version` reflect what actually served the response, not just
-what was requested — architecture §11 auditability.
-
-No semantic/hybrid retrieval yet — Stages 10-11.
-
-Every request is logged to `search_request` (architecture §8.1), tagged with an anonymous
-session id (architecture §11 privacy), for evaluation and event correlation (POST /events).
+Stage 9 query understanding (app/query_understanding.py) still runs first: colour/gender/price
+become hard filters applied to *both* BM25 and vector queries; category/occasion are extracted
+and shown in `interpretation` but never filtered (Stage 9 finding — see app/opensearch.py's
+build_filters docstring).
 """
 
 import json
@@ -32,8 +29,9 @@ from fastapi import APIRouter, Depends, Query, Response
 from opensearchpy.exceptions import OpenSearchException
 from psycopg import Connection
 
-from app import opensearch
+from app import opensearch, semantic
 from app.db import get_connection
+from app.fusion import weighted_score_fusion
 from app.query_understanding import ParsedQuery, parse_query
 from app.schemas import ProductResult, QueryInterpretation, SearchResponse
 from app.session import get_session_id
@@ -41,9 +39,26 @@ from app.session import get_session_id
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-OPENSEARCH_MODEL_VERSION = "bm25_opensearch_synonyms_qu_v1"
+HYBRID_MODEL_VERSION = "hybrid_weighted_fusion_v1"
+BM25_ONLY_MODEL_VERSION = "bm25_opensearch_synonyms_qu_v1"
 FALLBACK_MODEL_VERSION = "token_intersection_postgres_v0"
 RESULT_LIMIT = 24
+CANDIDATE_LIMIT = 50  # wider pool for fusion to draw from before truncating to RESULT_LIMIT
+
+
+def _to_product_result(doc: dict) -> ProductResult:
+    colours = doc.get("colours") or []
+    return ProductResult(
+        product_id=doc["product_id"],
+        title=doc["title"],
+        brand=doc["brand"],
+        category=doc["category"],
+        price=float(doc["price"]),
+        image_filename=doc["image_filename"],
+        colour=colours[0] if colours else "unknown",
+        sizes=sorted(doc["sizes"]) if doc["sizes"] else [],
+        in_stock=bool(doc["in_stock"]),
+    )
 
 
 def _score_expr(num_tokens: int) -> str:
@@ -51,33 +66,47 @@ def _score_expr(num_tokens: int) -> str:
     return " + ".join(clauses) if clauses else "0"
 
 
-def _search_opensearch(query: str, limit: int, parsed: ParsedQuery) -> list[ProductResult] | None:
-    """Returns None (not an exception) on any failure — the caller falls back to Postgres."""
+def _search_hybrid(query: str, limit: int, parsed: ParsedQuery) -> tuple[list[ProductResult], str, bool] | None:
+    """Returns (results, model_version, fallback_used), or None if OpenSearch itself is
+    unavailable (both BM25 and vector depend on it) — the caller falls back to Postgres."""
     client = opensearch.get_client()
     if client is None:
         return None
 
+    # Measured, not assumed: submitting these to a ThreadPoolExecutor (true parallel retrieval,
+    # as architecture §16 recommends for latency) was tried here and measured *slower* in
+    # practice (~1050ms) than calling them sequentially (~650ms) — nested-thread-pool overhead
+    # (this handler already runs inside FastAPI/anyio's own worker thread) outweighed the
+    # theoretical benefit on this platform. Kept sequential per that measurement, not the
+    # architectural recommendation in the abstract — see docs/risk_register.md.
     try:
-        docs = opensearch.search(client, query, limit, parsed=parsed)
+        bm25_docs = opensearch.search_with_scores(client, query, CANDIDATE_LIMIT, parsed)
     except OpenSearchException:
-        logger.warning("OpenSearch query failed, falling back to Postgres", exc_info=True)
+        logger.warning("BM25 query failed, falling back to Postgres", exc_info=True)
         opensearch.mark_unavailable()
         return None
 
-    return [
-        ProductResult(
-            product_id=doc["product_id"],
-            title=doc["title"],
-            brand=doc["brand"],
-            category=doc["category"],
-            price=float(doc["price"]),
-            image_filename=doc["image_filename"],
-            colour=(doc["colours"] or ["unknown"])[0],
-            sizes=sorted(doc["sizes"]) if doc["sizes"] else [],
-            in_stock=bool(doc["in_stock"]),
-        )
-        for doc in docs
-    ]
+    try:
+        vector_docs = semantic.search_with_scores(client, query, CANDIDATE_LIMIT, parsed)
+    except Exception:  # noqa: BLE001 -- any semantic-path failure just means "omit it"
+        logger.warning("Vector query failed, continuing BM25-only", exc_info=True)
+        vector_docs = None
+
+    docs_by_id = {doc["product_id"]: doc for doc in bm25_docs}
+    if vector_docs:
+        for doc in vector_docs:
+            docs_by_id.setdefault(doc["product_id"], doc)
+
+    if not vector_docs:
+        ranked_ids = [doc["product_id"] for doc in bm25_docs][:limit]
+        results = [_to_product_result(docs_by_id[pid]) for pid in ranked_ids]
+        return results, BM25_ONLY_MODEL_VERSION, True
+
+    lexical_scores = {doc["product_id"]: doc["_bm25_score"] for doc in bm25_docs}
+    semantic_scores = {doc["product_id"]: doc["_vector_score"] for doc in vector_docs}
+    ranked_ids = weighted_score_fusion(lexical_scores, semantic_scores)[:limit]
+    results = [_to_product_result(docs_by_id[pid]) for pid in ranked_ids]
+    return results, HYBRID_MODEL_VERSION, False
 
 
 def _search_postgres_fallback(
@@ -87,11 +116,9 @@ def _search_postgres_fallback(
     token_patterns = [f"%{t}%" for t in tokens]
     score_sql = _score_expr(len(tokens))
 
-    # Same hard constraints as the OpenSearch path (app/opensearch.py's _build_filters) —
+    # Same hard constraints as the hybrid path (app/opensearch.py's build_filters) —
     # architecture's "hard constraints before soft preference" isn't optional just because
-    # we're on the fallback engine. Only colour/gender/price — category and occasion are
-    # deliberately excluded, see app/opensearch.py's _build_filters docstring for the measured
-    # reason (both hurt overall ndcg@10 when tried as hard filters).
+    # we're on the fallback engine.
     filter_conditions = []
     filter_params: list = []
     if parsed.colour:
@@ -208,7 +235,7 @@ def search(
     query = q.strip()
 
     results: list[ProductResult] = []
-    model_version = OPENSEARCH_MODEL_VERSION
+    model_version = HYBRID_MODEL_VERSION
     fallback_used = False
     parsed = ParsedQuery()
     interpretation: QueryInterpretation | None = None
@@ -224,9 +251,9 @@ def search(
                 max_price=parsed.max_price,
             )
 
-        opensearch_results = _search_opensearch(query, RESULT_LIMIT, parsed)
-        if opensearch_results is not None:
-            results = opensearch_results
+        hybrid_result = _search_hybrid(query, RESULT_LIMIT, parsed)
+        if hybrid_result is not None:
+            results, model_version, fallback_used = hybrid_result
         else:
             results = _search_postgres_fallback(conn, query, RESULT_LIMIT, parsed)
             model_version = FALLBACK_MODEL_VERSION

@@ -5,11 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import close_pool, open_pool
 from app.routers import events, health, products, search
+from app.semantic import preload_model
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     open_pool()
+    preload_model()  # so the first real search doesn't pay the ONNX model load cost
     yield
     close_pool()
 
