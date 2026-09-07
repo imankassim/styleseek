@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+**/.kaggle/
+kaggle.json
+
+# Raw / large data (never committed — see docs/data_sheets/)
+database/data/raw/
+**/*.csv.gz
+**/dataset_downloads/
+
+# ML artefacts
+ml/**/*.bin
+ml/**/*.pkl
+ml/**/*.txt.model
+ml/**/checkpoints/
+*.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
