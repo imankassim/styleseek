@@ -29,6 +29,7 @@ kaggle.json
 database/data/raw/
 **/*.csv.gz
 **/dataset_downloads/
+database/data/ingestion_rejects.csv
 
 # ML artefacts
 ml/**/*.bin
