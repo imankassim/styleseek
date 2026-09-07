@@ -1,0 +1,157 @@
+"use client";
+
+import { use, useEffect, useState } from "react";
+import Link from "next/link";
+
+import { getProduct } from "@/lib/products-api";
+import { useBasket } from "@/lib/basket-context";
+import type { ProductDetail } from "@/types/product";
+
+type State =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "not_found" }
+  | { status: "success"; product: ProductDetail };
+
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  // Keying on id gives each product a fresh component instance — state naturally starts at
+  // "loading" again on navigation instead of needing a synchronous reset inside the effect.
+  return <ProductDetailView key={id} id={id} />;
+}
+
+function ProductDetailView({ id }: { id: string }) {
+  const [state, setState] = useState<State>({ status: "loading" });
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [justAdded, setJustAdded] = useState(false);
+  const { addItem } = useBasket();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getProduct(id)
+      .then((product) => {
+        if (cancelled) return;
+        setState({ status: "success", product });
+        setSelectedSize(product.variants.find((v) => v.stockQuantity > 0)?.size ?? null);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        if (error instanceof Error && error.message.includes("(404)")) {
+          setState({ status: "not_found" });
+        } else {
+          setState({
+            status: "error",
+            message: error instanceof Error ? error.message : "Unknown error.",
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (state.status === "loading") {
+    return <main className="mx-auto max-w-3xl px-6 py-12 text-neutral-600">Loading…</main>;
+  }
+
+  if (state.status === "not_found") {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <p className="font-medium text-neutral-900">Product not found.</p>
+        <Link href="/browse" className="mt-2 inline-block text-sm underline">
+          Back to browse
+        </Link>
+      </main>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4">
+          <p className="font-medium text-red-800">Something went wrong.</p>
+          <p className="mt-1 text-sm text-red-700">{state.message}</p>
+        </div>
+      </main>
+    );
+  }
+
+  const { product } = state;
+  const selectedVariant = product.variants.find((v) => v.size === selectedSize) ?? null;
+
+  function handleAddToBasket() {
+    if (!selectedVariant) return;
+    addItem({
+      variantId: selectedVariant.variantId,
+      productId: product.productId,
+      title: product.title,
+      colour: selectedVariant.colour,
+      size: selectedVariant.size,
+      price: product.price,
+      sku: selectedVariant.sku,
+    });
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 2000);
+  }
+
+  return (
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-12 md:flex-row">
+      <div
+        role="img"
+        aria-label={product.imageAlt}
+        className="flex aspect-[3/4] w-full items-center justify-center bg-neutral-100 text-sm text-neutral-400 md:w-1/2"
+      >
+        Image placeholder
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3">
+        {product.brand && (
+          <p className="text-xs uppercase tracking-wide text-neutral-500">{product.brand}</p>
+        )}
+        <h1 className="text-2xl font-semibold text-neutral-900">{product.title}</h1>
+        <p className="text-lg text-neutral-800">£{product.price.toFixed(2)}</p>
+        <p className="text-sm text-neutral-600">
+          {product.category}
+          {product.occasion ? ` · ${product.occasion}` : ""}
+        </p>
+
+        <fieldset className="mt-4">
+          <legend className="mb-2 text-sm font-medium text-neutral-900">Size</legend>
+          <div className="flex flex-wrap gap-2">
+            {product.variants.map((variant) => (
+              <button
+                key={variant.variantId}
+                type="button"
+                disabled={variant.stockQuantity === 0}
+                aria-pressed={selectedSize === variant.size}
+                onClick={() => setSelectedSize(variant.size)}
+                className={`rounded-md border px-3 py-1.5 text-sm ${
+                  selectedSize === variant.size
+                    ? "border-neutral-900 bg-neutral-900 text-white"
+                    : "border-neutral-300 bg-white text-neutral-900 hover:border-neutral-500"
+                } disabled:cursor-not-allowed disabled:opacity-40`}
+              >
+                {variant.size}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <button
+          type="button"
+          onClick={handleAddToBasket}
+          disabled={!selectedVariant || selectedVariant.stockQuantity === 0}
+          className="mt-4 w-fit rounded-md bg-neutral-900 px-5 py-2.5 font-medium text-white hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {justAdded ? "Added ✓" : "Add to basket"}
+        </button>
+
+        {!selectedVariant && (
+          <p className="text-xs text-red-700">This item is currently out of stock.</p>
+        )}
+      </div>
+    </main>
+  );
+}
