@@ -11,7 +11,7 @@ from fastembed import TextEmbedding
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import OpenSearchException
 
-from app.opensearch import build_filters
+from app.opensearch import build_filters, eligibility_filters
 
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 VECTOR_INDEX_NAME = "styleseek_products_v3_vectors"
@@ -47,11 +47,10 @@ def search_with_scores(client: OpenSearch, query: str, limit: int, parsed=None) 
     if query_vector is None:
         return None
 
-    knn_clause: dict = {"vector": query_vector, "k": limit}
+    filters = eligibility_filters()
     if parsed is not None:
-        filters = build_filters(parsed)
-        if filters:
-            knn_clause["filter"] = {"bool": {"filter": filters}}
+        filters = filters + build_filters(parsed)
+    knn_clause: dict = {"vector": query_vector, "k": limit, "filter": {"bool": {"filter": filters}}}
 
     try:
         resp = client.search(

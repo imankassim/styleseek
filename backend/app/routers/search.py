@@ -31,6 +31,7 @@ from psycopg import Connection
 
 from app import opensearch, semantic
 from app.db import get_connection
+from app.eligibility import deduplicate, products_with_size_in_stock
 from app.fusion import weighted_score_fusion
 from app.query_understanding import ParsedQuery, parse_query
 from app.schemas import ProductResult, QueryInterpretation, SearchResponse
@@ -66,7 +67,39 @@ def _score_expr(num_tokens: int) -> str:
     return " + ".join(clauses) if clauses else "0"
 
 
-def _search_hybrid(query: str, limit: int, parsed: ParsedQuery) -> tuple[list[ProductResult], str, bool] | None:
+def _apply_eligibility_and_diversity(
+    conn: Connection, ranked_ids: list[str], docs_by_id: dict, parsed: ParsedQuery, limit: int
+) -> list[str]:
+    """Stage 12: the index-level filters (colour/gender/price/size-offered/in_stock, all in
+    app/opensearch.py) already did most of the eligibility work before this point — this
+    handles the two things that need the live database or the full candidate list.
+
+    1. If a specific size was requested, confirm it's actually in stock *right now* (the index
+       only knows a product has *ever* offered that size, not current stock — see
+       app/opensearch.py's build_filters).
+    2. Duplicate control: collapse near-identical results (same title/category/colour — the
+       catalogue genuinely has many, e.g. several identical-looking "Nike Men Black Shoes"
+       entries, different product_ids) down to one representative each, per architecture's
+       logical pipeline step 6.
+    """
+    if parsed.size:
+        in_stock_ids = products_with_size_in_stock(conn, ranked_ids, parsed.size)
+        ranked_ids = [pid for pid in ranked_ids if pid in in_stock_ids]
+
+    ranked_ids = deduplicate(
+        ranked_ids,
+        key_fn=lambda pid: (
+            docs_by_id[pid]["title"],
+            docs_by_id[pid]["category"],
+            tuple(sorted(docs_by_id[pid].get("colours") or [])),
+        ),
+    )
+    return ranked_ids[:limit]
+
+
+def _search_hybrid(
+    conn: Connection, query: str, limit: int, parsed: ParsedQuery
+) -> tuple[list[ProductResult], str, bool] | None:
     """Returns (results, model_version, fallback_used), or None if OpenSearch itself is
     unavailable (both BM25 and vector depend on it) — the caller falls back to Postgres."""
     client = opensearch.get_client()
@@ -98,13 +131,15 @@ def _search_hybrid(query: str, limit: int, parsed: ParsedQuery) -> tuple[list[Pr
             docs_by_id.setdefault(doc["product_id"], doc)
 
     if not vector_docs:
-        ranked_ids = [doc["product_id"] for doc in bm25_docs][:limit]
+        ranked_ids = [doc["product_id"] for doc in bm25_docs]
+        ranked_ids = _apply_eligibility_and_diversity(conn, ranked_ids, docs_by_id, parsed, limit)
         results = [_to_product_result(docs_by_id[pid]) for pid in ranked_ids]
         return results, BM25_ONLY_MODEL_VERSION, True
 
     lexical_scores = {doc["product_id"]: doc["_bm25_score"] for doc in bm25_docs}
     semantic_scores = {doc["product_id"]: doc["_vector_score"] for doc in vector_docs}
-    ranked_ids = weighted_score_fusion(lexical_scores, semantic_scores)[:limit]
+    ranked_ids = weighted_score_fusion(lexical_scores, semantic_scores)
+    ranked_ids = _apply_eligibility_and_diversity(conn, ranked_ids, docs_by_id, parsed, limit)
     results = [_to_product_result(docs_by_id[pid]) for pid in ranked_ids]
     return results, HYBRID_MODEL_VERSION, False
 
@@ -130,6 +165,12 @@ def _search_postgres_fallback(
     if parsed.max_price is not None:
         filter_conditions.append("p.price <= %s")
         filter_params.append(parsed.max_price)
+    if parsed.size:
+        filter_conditions.append(
+            "EXISTS (SELECT 1 FROM product_variant v2 "
+            "WHERE v2.product_id = p.product_id AND v2.size = %s AND v2.stock_quantity > 0)"
+        )
+        filter_params.append(parsed.size)
     filter_sql = ("AND " + " AND ".join(filter_conditions)) if filter_conditions else ""
 
     sql = f"""
@@ -165,10 +206,14 @@ def _search_postgres_fallback(
         WHERE sc.score > 0
         GROUP BY sc.product_id, sc.title, sc.brand, sc.category, sc.price, sc.image_filename,
                  sc.colour, sc.score
+        HAVING bool_or(v.stock_quantity > 0)
         ORDER BY sc.score DESC, sc.product_id
         LIMIT %s
     """  # noqa: S608 -- filter_sql is built from a fixed set of literal clauses, not user input
 
+    # No duplicate-control pass here (unlike _search_hybrid) — this is already the degraded,
+    # "limited fallback" path (architecture §10), and only exercised when OpenSearch itself is
+    # down. Stock/size eligibility still applies above; that's the correctness-critical part.
     with conn.cursor() as cur:
         cur.execute(sql, [*filter_params, *token_patterns, limit])
         rows = cur.fetchall()
@@ -249,9 +294,10 @@ def search(
                 colour=parsed.colour,
                 occasion=parsed.occasion,
                 max_price=parsed.max_price,
+                size=parsed.size,
             )
 
-        hybrid_result = _search_hybrid(query, RESULT_LIMIT, parsed)
+        hybrid_result = _search_hybrid(conn, query, RESULT_LIMIT, parsed)
         if hybrid_result is not None:
             results, model_version, fallback_used = hybrid_result
         else:

@@ -63,19 +63,33 @@ def build_filters(parsed) -> list[dict]:
         filters.append({"term": {"gender": parsed.gender}})
     if parsed.max_price is not None:
         filters.append({"range": {"price": {"lte": parsed.max_price}}})
+    if parsed.size:
+        # Coarse pre-filter: "has this product ever offered this size at all". The index only
+        # tracks aggregate stock, not per-size stock, so this alone can't confirm the requested
+        # size is *currently* in stock — app/eligibility.py does that precise check against
+        # Postgres afterwards, on the (small) fused candidate set.
+        filters.append({"term": {"sizes": parsed.size}})
     return filters
+
+
+def eligibility_filters() -> list[dict]:
+    """Stage 12 (architecture "ELIGIBILITY AND DIVERSITY: stock..."): a product with zero stock
+    across every size is never eligible, regardless of the query — unlike colour/size/price,
+    this isn't query-dependent, so it's separate from build_filters()."""
+    return [{"term": {"in_stock": True}}]
 
 
 def search_with_scores(client: OpenSearch, query: str, limit: int, parsed=None) -> list[dict]:
     """Like search(), but each returned dict also carries `_bm25_score` — needed for fusion
     (app/routers/search.py), not just plain display."""
-    bool_query: dict = {
-        "must": [{"multi_match": {"query": query, "type": "cross_fields", "fields": BOOSTED_FIELDS}}]
-    }
+    filters = eligibility_filters()
     if parsed is not None:
-        filters = build_filters(parsed)
-        if filters:
-            bool_query["filter"] = filters
+        filters = filters + build_filters(parsed)
+
+    bool_query: dict = {
+        "must": [{"multi_match": {"query": query, "type": "cross_fields", "fields": BOOSTED_FIELDS}}],
+        "filter": filters,
+    }
 
     resp = client.search(
         index=INDEX_NAME,

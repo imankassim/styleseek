@@ -23,6 +23,7 @@ class QueryInterpretation(BaseModel):
     colour: str | None = None
     occasion: str | None = None
     max_price: float | None = None
+    size: str | None = None
 
 
 class SearchResponse(BaseModel):
