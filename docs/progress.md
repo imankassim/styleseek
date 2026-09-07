@@ -15,7 +15,7 @@ progress from git log alone.
 | 6 | Complete search-related commerce | Done | Product detail page (size selection, add-to-basket), basket simulation (localStorage), `/browse` (category/price filters, sort, pagination) — full journey verified in browser end-to-end, no console errors |
 | 7 | Instrument and label | Done | Anonymous session cookies, `search_request`/`event` logging, batched impression/click tracking (verified in browser + DB), relevance rubric + 18-query labelled set (58 verified product ids, train/val/test split) |
 | 8 | Create lexical baseline | Done | G4 met (evaluation harness + frozen 18-query judgment set), G5 met — EXP14 (BM25 boosted + synonyms) promoted to serving, ndcg@10 0.755 vs EXP10's Postgres comparison at 0.355 (+113%). 45/45 tests pass including a failure-injection test for the OpenSearch→Postgres fallback |
-| 9 | Understand queries | Not started | — |
+| 9 | Understand queries | Done | Deterministic parser (colour/gender/price as hard filters; category/occasion measured and deliberately excluded from filtering — see risk register). Live `/search` model version `bm25_opensearch_synonyms_qu_v1`. 69/69 tests pass, interpretation surfaced in the UI |
 | 10 | Add semantic retrieval | Not started | G6 |
 | 11 | Build hybrid retrieval | Not started | G7 |
 | 12 | Guarantee safety | Not started | — |
