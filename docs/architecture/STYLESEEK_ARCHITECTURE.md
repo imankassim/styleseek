@@ -417,6 +417,10 @@ the next. Rejected experiments remain documented evidence.
 
 ## 14. Planned experiment catalogue
 
+> IDs below are quoted verbatim from `STYLESEE1.docx`. The working repo (experiment folders,
+> `experiments/experiment_register.md`) uses a plain unpadded numbering instead — `EXP1` for
+> `EXP-001`, `EXP10` for `EXP-010`, and so on, same order.
+
 | Experiment | Possibility considered | Role |
 |---|---|---|
 | EXP-001 | Whole-query substring search | Primitive baseline |

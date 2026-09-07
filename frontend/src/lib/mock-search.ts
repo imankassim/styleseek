@@ -4,7 +4,7 @@ import type { SearchResponse } from "@/types/product";
 /**
  * Stands in for `GET /search` until the FastAPI backend exists (Stage 5). This is a UI
  * scaffolding aid, not a documented retrieval experiment — the real substring/token baselines
- * (EXP-001, EXP-002) are measured against the real catalogue in Stage 3 and recorded in
+ * (EXP1, EXP2) are measured against the real catalogue in Stage 3 and recorded in
  * experiments/experiment_register.md. This function exists only so every page state (loading,
  * empty, error, success) can be demonstrated in the browser before there is a backend.
  *

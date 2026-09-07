@@ -19,7 +19,7 @@ Adopt the stack specified in the governing architecture document:
 - **Operational database:** PostgreSQL — source of truth for products, variants, stock.
 - **Search:** OpenSearch — BM25 lexical index now; vector fields and hybrid retrieval later.
 - **Fusion:** Reciprocal Rank Fusion (RRF) as the initial baseline, with alternatives evaluated
-  as experiments (EXP-032–034) before any replacement.
+  as experiments (EXP32–34) before any replacement.
 - **Learning-to-rank:** LightGBM (`LGBMRanker`, LambdaRank objective), introduced only once
   sufficient labelled/behavioural data exists (Stage 13, not before).
 - **Personalisation:** anonymous, bounded session features — never overriding explicit query
@@ -34,7 +34,7 @@ Adopt the stack specified in the governing architecture document:
   contracts fit the documented `/search` response contract (architecture §7) more directly, and
   is what the architecture names explicitly.
 - **A single relational full-text search (no OpenSearch)** — considered as an early experiment
-  (EXP-010, PostgreSQL full-text search) and retained as a comparison baseline, not the serving
+  (EXP10, PostgreSQL full-text search) and retained as a comparison baseline, not the serving
   path, per "baseline first" (architecture §4).
 
 ## Consequences
