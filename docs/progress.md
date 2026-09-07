@@ -11,7 +11,7 @@ progress from git log alone.
 | 2 | Build the visible search journey | Done | G1 met — idle/loading/error/empty/success states verified in browser, no console errors |
 | 3 | Create primitive baselines | Done | EXP1 (any-hit 0.30/10), EXP2 (0.90/10, several hollow hits) — see `experiments/experiment_register.md` |
 | 4 | Build product foundation | Done | G2 met — 44,446 products / 216,108 variants ingested from the Kaggle "small" dataset into Neon Postgres, 0 rejected, 7/7 data quality tests pass (`tests/data_quality/test_catalogue.py`) |
-| 5 | Connect the application | Not started | G3 |
+| 5 | Connect the application | Done | G3 met — FastAPI (`/health`, `/products`, `/products/{id}`, `/search`) connected to the real Postgres catalogue; frontend calls the real API end-to-end (verified in browser); 15/15 backend + integration tests pass |
 | 6 | Complete search-related commerce | Not started | — |
 | 7 | Instrument and label | Not started | — |
 | 8 | Create lexical baseline | Not started | G4, G5 |
@@ -35,5 +35,8 @@ progress from git log alone.
   catalogue/metadata either way; only image resolution differs (irrelevant to search/ranking).
 - Database is a managed free-tier Neon Postgres project (no local Postgres/Docker installed) —
   connection string lives only in git-ignored `database/.env`.
-- Stage 5 (connect the application) will need the frontend's mock catalogue/search
-  (`frontend/src/lib/mock-*.ts`) replaced with real FastAPI calls against this data.
+- `/search`'s retrieval is a deliberate placeholder (`token_intersection_postgres_v0` — SQL port
+  of Stage 3's EXP2), not BM25/lexical work yet. EXP10 (Postgres full-text search) and BM25
+  tuning are still "Not started" in the experiment register — that's Stage 8, not done early.
+- To run locally: `python backend/run.py` (port 8000) and `npm run dev` in `frontend/` (port
+  3000) — both need `database/.env` (or `backend/.env`) with `DATABASE_URL` set.
