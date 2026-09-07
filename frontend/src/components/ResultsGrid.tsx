@@ -10,6 +10,30 @@ export type SearchState =
   | { status: "error"; message: string }
   | { status: "success"; response: SearchResponse };
 
+function InterpretationChips({ interpretation }: { interpretation: SearchResponse["interpretation"] }) {
+  if (!interpretation) return null;
+
+  const chips = [
+    interpretation.category && `category: ${interpretation.category}`,
+    interpretation.colour && `colour: ${interpretation.colour}`,
+    interpretation.occasion && `occasion: ${interpretation.occasion}`,
+    interpretation.maxPrice != null && `under £${interpretation.maxPrice}`,
+  ].filter(Boolean) as string[];
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
+      <span>Understood:</span>
+      {chips.map((chip) => (
+        <span key={chip} className="rounded-full border border-neutral-300 px-2 py-0.5">
+          {chip}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SkeletonCard() {
   return (
     <li
@@ -80,6 +104,8 @@ export function ResultsGrid({
           </button>
         </div>
       )}
+
+      {state.status === "success" && <InterpretationChips interpretation={state.response.interpretation} />}
 
       {state.status === "success" && state.response.results.length === 0 && (
         <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
