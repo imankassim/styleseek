@@ -21,4 +21,4 @@ Source: `STYLESEE1.docx` §16. Reviewed at each stage decision gate (architectur
 
 | Risk / assumption | Impact | Mitigation or evidence | Status |
 |---|---|---|---|
-| Kaggle dataset requires manual/local download (no Kaggle API credentials configured for this build) | Stage 4 (catalogue) blocked until dataset is available locally. | User downloads dataset manually; ingestion script reads from a local path rather than calling the Kaggle API. | Open |
+| Kaggle dataset is too large for a manual browser download | Stage 4 (catalogue) blocked until dataset is available locally. | Use `kagglehub.dataset_download(...)`, which needs a one-off Kaggle account authentication step (walked through at Stage 4). | Open |

@@ -9,9 +9,11 @@ in Stage 4.
 - **Dataset:** Fashion Product Images Dataset
 - **Author/owner:** Param Aggarwal (Kaggle username `paramaggarwal`)
 - **URL:** https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-dataset/data
-- **Access method:** Manual download by project owner (no Kaggle API credentials configured for
-  this build — see [risk register](../risk_register.md)). Downloaded file(s) are kept out of
-  version control (see `.gitignore`) and referenced by local path only.
+- **Access method:** `kagglehub.dataset_download("paramaggarwal/fashion-product-images-dataset")`
+  (the dataset is too large — several GB of images — for a manual browser download). This
+  requires a one-off Kaggle account authentication step, walked through when Stage 4 is reached.
+  Downloaded file(s) are kept out of version control (see `.gitignore`) and referenced by local
+  cache path only.
 - **Local path:** _to be recorded here once downloaded — see `database/data/RAW_DATA_README.md`_
 
 ## Licence — ⚠ action required before ingestion
