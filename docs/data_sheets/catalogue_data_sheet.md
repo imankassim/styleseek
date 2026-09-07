@@ -6,15 +6,22 @@ in Stage 4.
 
 ## Source
 
-- **Dataset:** Fashion Product Images Dataset
+- **Dataset used:** `paramaggarwal/fashion-product-images-small` — **not** the full
+  `fashion-product-images-dataset` originally linked. The full dataset's image archive is 23.1GB;
+  this machine's disk didn't have room even after cleanup (see risk register). The "small"
+  variant has the identical `styles.csv` catalogue/metadata (44,446 rows, same schema) with
+  lower-resolution images, which doesn't affect search/ranking work at all.
 - **Author/owner:** Param Aggarwal (Kaggle username `paramaggarwal`)
 - **URL:** https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-dataset/data
-- **Access method:** `kagglehub.dataset_download("paramaggarwal/fashion-product-images-dataset")`
-  (the dataset is too large — several GB of images — for a manual browser download). This
-  requires a one-off Kaggle account authentication step, walked through when Stage 4 is reached.
-  Downloaded file(s) are kept out of version control (see `.gitignore`) and referenced by local
-  cache path only.
-- **Local path:** _to be recorded here once downloaded — see `database/data/RAW_DATA_README.md`_
+  (small variant: https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small)
+- **Access method:** `kagglehub.dataset_download("paramaggarwal/fashion-product-images-small")`,
+  authenticated via a Kaggle API token at `~/.kaggle/access_token` (kagglehub's newer
+  single-token auth, resolved by `kagglesdk.kaggle_env.get_access_token_from_env`). Downloaded
+  files are kept out of version control — kagglehub caches them under
+  `~/.cache/kagglehub/datasets/...`, outside the repo entirely.
+- **Local path (this machine):** `~/.cache/kagglehub/datasets/paramaggarwal/fashion-product-images-small/versions/1/`
+  (`styles.csv` + `images/*.jpg`, 44,446 rows, 44,441 with a matching image file — 5 rows have
+  no image).
 
 ## Licence — ⚠ action required before ingestion
 
@@ -35,35 +42,40 @@ Until confirmed:
   confirmation.
 - This mirrors architecture §2.2 ("no unlicensed content") and §11 ("data provenance").
 
-## Expected structure (per Kaggle dataset description)
+## Confirmed structure
 
-- `styles.csv` — one row per product: `id, gender, masterCategory, subCategory, articleType,
-  baseColour, season, year, usage, productDisplayName`
-- `images/` — one image per product, filename `<id>.jpg`
-- `styles/` (JSON variant, some dataset versions) — per-product JSON with extended attributes
-- A smaller ~2,900-row sample subset is commonly distributed alongside the ~44,000-row full set;
-  which one is used is recorded once downloaded.
+- `styles.csv` — 44,446 rows, columns exactly: `id, gender, masterCategory, subCategory,
+  articleType, baseColour, season, year, usage, productDisplayName`. No missing `id` or
+  `productDisplayName` values.
+- `images/` — one image per product, filename `<id>.jpg`. 44,441 of 44,446 rows have a matching
+  file (5 do not — `image_filename` is left `NULL` for those, not rejected outright).
+- `masterCategory` has 7 distinct values, `subCategory` has 44. Ingestion's controlled vocabulary
+  (`database/ingest.py`, `ALLOWED_MASTER_CATEGORIES` / `ALLOWED_SUB_CATEGORIES`) is the observed
+  union of both, lowercased — every row in this snapshot was accepted (0 rejected on the full run).
 
-The exact columns are re-verified programmatically against this list during ingestion
-(Stage 4) — the ingestion script fails loudly rather than guessing if the schema differs.
-
-## Mapping to StyleSeek entities
+## Mapping to StyleSeek entities (as implemented in `database/ingest.py`)
 
 | Dataset field | StyleSeek entity.field | Notes |
 |---|---|---|
-| `id` | `product.product_id` (source id, re-keyed) | |
+| `id` | `product.product_id` | Used verbatim as the primary key. |
 | `productDisplayName` | `product.title` | |
-| `masterCategory` / `subCategory` / `articleType` | `product.category` | Collapsed to a controlled vocabulary — architecture §8.3. |
-| `baseColour` | `product_variant.colour` | One product may need synthetic size/colour variants since the dataset itself is not variant-level. |
-| `usage` | `product.occasion` | Closest available field; occasion vocabulary may need supplementing. |
-| `gender` | `product.attributes.gender` | |
-| — (not in dataset) | `product.price`, `product_variant.stock_quantity`, `product_variant.size`, `product_variant.SKU` | **Not present in source data — must be clearly synthetic**, generated with a documented, seeded, reproducible method and labelled as synthetic per architecture §9 ("clearly label any synthetic behavioural data") and §2.2. |
-| `images/<id>.jpg` | `product` permitted image | Subject to licence confirmation above. |
+| `subCategory` (falling back to `masterCategory`) | `product.category` | Controlled vocabulary — architecture §8.3. |
+| `baseColour` | `product_variant.colour` | Real dataset value — colour is not synthetic. |
+| `usage` | `product.occasion` | Closest available field. |
+| `gender` | `product.gender` | |
+| `images/<id>.jpg` (if present) | `product.image_filename` | Subject to the licence confirmation above — stored as a local reference only, not served publicly. |
+| — (not in dataset) | `product.price` | **Synthetic** — seeded by `sha256(product_id)`, category-priced band, `is_synthetic_price = TRUE`. Reproducible: re-ingesting yields identical prices. |
+| — (not in dataset) | `product_variant.size`, `.sku`, `.stock_quantity` | **Synthetic** — a fixed size run per category (footwear/bottoms/tops/one-size), seeded stock per `(product_id, size)`, `is_synthetic_variant = TRUE`. |
+| — (not in dataset) | `product_variant.colour` count | Each product gets exactly one colour (the dataset's `baseColour`) × its category's size run as variants — real multi-colour variants aren't in the source data, so this isn't simulated either. |
+
+Result of the full ingestion run: **44,446 products, 216,108 variants, 0 rejected.**
 
 ## Known limitations
 
-- No real price, stock or size/variant data — must be synthesised and clearly labelled
-  (architecture §9 training controls; §16 "poor catalogue metadata" risk).
+- No real price or stock data — synthesised as above, and flagged (`is_synthetic_price`,
+  `is_synthetic_variant`) rather than presented as real (architecture §9, §2.2).
+- Only one colour per product (the dataset's own `baseColour`) — genuine colour-variant
+  products aren't represented; this is a limitation of the source data, not simulated.
 - No genuine behavioural/interaction data — session/event data will be synthetic or
   self-generated during testing, never presented as real user behaviour (architecture §16, "too
   little genuine interaction data").
