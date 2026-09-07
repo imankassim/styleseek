@@ -29,9 +29,9 @@ Status values: `Not started` · `In progress` · `Accepted` · `Rejected`.
 | EXP24 | Labelled structured embeddings | Representation comparison | Accepted | ndcg@10 0.258 — better than plain concatenation (EXP23) but still worse than title-only (EXP22). See `experiments/EXP24_labelled_structured_embeddings/README.md`. |
 | EXP30 | Vector-only retrieval | Semantic baseline | Accepted | Not competitive as a standalone ranker (ndcg@10 0.293 vs BM25's 0.755) but found relevant candidates BM25 missed entirely on 5/15 queries (G6 evidence). See `experiments/EXP30_vector_only_retrieval/README.md`. |
 | EXP31 | BM25-only retrieval | Lexical comparator | Accepted | = EXP14, referenced under this ID for the Stage 10/11 comparison. See `experiments/EXP31_bm25_only_retrieval/README.md`. |
-| EXP32 | RRF hybrid retrieval | Rank-fusion baseline | Not started | Fusion algorithm implemented and unit-tested (`search/fusion.py`) ahead of time; not yet run against real retrieval results. |
-| EXP33 | Normalised score fusion | Fusion alternative | Not started | Same — `search/fusion.py:normalised_score_fusion` implemented and unit-tested, not yet run. |
-| EXP34 | Weighted score fusion | Fusion alternative | Not started | Same — `search/fusion.py:weighted_score_fusion` implemented and unit-tested, not yet run. |
+| EXP32 | RRF hybrid retrieval | Rank-fusion baseline | Rejected | ndcg@10 0.549 (vs BM25 alone 0.755) — recall improved but ranking quality regressed 27% relative; equal-rank trust between a strong and a weak ranker doesn't work. See `experiments/EXP32_rrf_hybrid/README.md`. |
+| EXP33 | Normalised score fusion | Fusion alternative | Accepted | ndcg@10 0.673 — better than RRF but still below BM25 alone; preserving score magnitude helps, equal weighting still doesn't. See `experiments/EXP33_normalised_score_fusion/README.md`. |
+| EXP34 | Weighted score fusion | Fusion alternative | **Accepted — promoted to serving** | 90/10 lexical/semantic beats BM25 alone on ndcg@10 (0.765, +1.3%) AND recall@50 (0.721, +4.0%) simultaneously. Live `/search` model version `hybrid_weighted_fusion_v1`. See `experiments/EXP34_weighted_score_fusion/README.md`. |
 | EXP40 | Simple pointwise model | Learned baseline | Not started | |
 | EXP41 | Tree-based pointwise model | Learned baseline | Not started | |
 | EXP43 | LightGBM LambdaRank | Ranking candidate | Not started | |

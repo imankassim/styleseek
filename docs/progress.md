@@ -17,7 +17,7 @@ progress from git log alone.
 | 8 | Create lexical baseline | Done | G4 met (evaluation harness + frozen 18-query judgment set), G5 met — EXP14 (BM25 boosted + synonyms) promoted to serving, ndcg@10 0.755 vs EXP10's Postgres comparison at 0.355 (+113%). 45/45 tests pass including a failure-injection test for the OpenSearch→Postgres fallback |
 | 9 | Understand queries | Done | Deterministic parser (colour/gender/price as hard filters; category/occasion measured and deliberately excluded from filtering — see risk register). Live `/search` model version `bm25_opensearch_synonyms_qu_v1`. 69/69 tests pass, interpretation surfaced in the UI |
 | 10 | Add semantic retrieval | Done | G6 met — title-only embeddings (EXP22, `BAAI/bge-small-en-v1.5` via fastembed) are the best representation; not competitive as a standalone ranker (ndcg@10 0.293 vs BM25's 0.755) but found relevant candidates BM25 missed entirely on 5/15 queries (EXP30). 93/93 tests pass |
-| 11 | Build hybrid retrieval | Not started | G7 |
+| 11 | Build hybrid retrieval | Done | G7 met — EXP34 (90/10 weighted BM25+vector fusion) beats BM25 alone on ndcg@10 (+1.3%) and recall@50 (+4.0%) simultaneously, sub-second latency (~650ms). Live `/search` model version `hybrid_weighted_fusion_v1`, two-tier fallback. 95/95 tests pass |
 | 12 | Guarantee safety | Not started | — |
 | 13 | Train learned ranking | Not started | G8 |
 | 14 | Add bounded context | Not started | G9 |
@@ -43,11 +43,19 @@ progress from git log alone.
   3000) — both need `database/.env` (or `backend/.env`) with `DATABASE_URL` and `OPENSEARCH_URL`
   set. Rebuild the search index after a catalogue change with `python search/index.py` (base
   index) and `python experiments/EXP14_synonym_expansion/run.py` (the one actually served).
-- Known gap, deliberately not fixed yet: plain BM25 always returns *something*, even for a
-  genuinely no-result query — see `tests/search_regression/test_search_regression.py`. Real
-  eligibility rules (Stage 12) are where this gets solved.
-- Semantic retrieval (Stage 10) is experimental only so far, not wired into live `/search` —
-  that integration is Stage 11's hybrid fusion job. Vector index: `styleseek_products_v3_vectors`
-  (title/metadata/structured vector fields), built by `python search/index_vectors.py`. Rebuilding
-  the full catalogue's embeddings takes roughly 80 minutes on this machine (CPU-only ONNX,
-  ~44,446 products × 3 representations) — budget for that if the catalogue changes.
+- Known gap, deliberately not fixed yet, and worse than it was at Stage 8: `/search` always
+  returns *something*, even for a genuinely no-result query — vector kNN has no concept of "no
+  match" at all (BM25 alone could at least occasionally score zero). See
+  `tests/search_regression/test_search_regression.py`. A minimum-relevance cutoff is Stage 12
+  (eligibility) work.
+- Live `/search` now serves hybrid BM25+vector fusion (`hybrid_weighted_fusion_v1`, Stage 11).
+  Vector index: `styleseek_products_v3_vectors` (title/metadata/structured vector fields), built
+  by `python search/index_vectors.py`. Rebuilding the full catalogue's embeddings takes roughly
+  80 minutes on this machine (CPU-only ONNX, ~44,446 products × 3 representations) — budget for
+  that if the catalogue changes. Re-run `python experiments/EXP34_weighted_score_fusion/run.py`
+  (or the others) to re-check the fusion weights still hold after a catalogue/model change.
+- Local dev gotcha (Windows): if `/search` ever looks suspiciously slow (multi-second) when
+  testing with a Python script, check whether the script uses `"localhost"` — Python's
+  `requests` (and some other clients) try IPv6 `::1` first, time out, then fall back to IPv4,
+  adding 1-2+ seconds per request that has nothing to do with the backend. Use `127.0.0.1`
+  directly to get a true reading. The browser/frontend's own `fetch()` isn't affected.
