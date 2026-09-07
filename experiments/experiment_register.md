@@ -21,17 +21,17 @@ Status values: `Not started` · `In progress` · `Accepted` · `Rejected`.
 | EXP11 | BM25 equal field weights | Lexical baseline | Accepted | ndcg@10 0.552. `best_fields` undersells multi-attribute queries — motivated EXP12. See `experiments/EXP11_bm25_equal_weights/README.md`. |
 | EXP12 | BM25 boosted structured fields | Lexical tuning | Accepted | ndcg@10 0.661 (best non-synonym config). Superseded by EXP14 for serving. See `experiments/EXP12_bm25_boosted_fields/README.md`. |
 | EXP13 | BM25 fuzziness | Typo experiment | Rejected | Fixes the one typo query (ndcg 0→0.601) but `most_fields` regresses every other type; net ndcg@10 0.441 vs EXP12's 0.661. Moved to `discarded/EXP13_bm25_fuzziness/`. |
-| EXP14 | Synonym expansion | Vocabulary experiment | **Accepted — promoted to serving** | ndcg@10 0.755, best of all lexical experiments. Live `/search` model version `bm25_opensearch_synonyms_v1`, with fallback to EXP2-style Postgres search if OpenSearch is unavailable. See `experiments/EXP14_synonym_expansion/README.md`. |
-| EXP20 | LLM query parser | Optional parser comparison | Not started | |
-| EXP21 | Description-only embeddings | Representation comparison | Not started | |
-| EXP22 | Title plus description embeddings | Representation comparison | Not started | |
-| EXP23 | All metadata embeddings | Representation comparison | Not started | |
-| EXP24 | Labelled structured embeddings | Representation comparison | Not started | |
-| EXP30 | Vector-only retrieval | Semantic baseline | Not started | |
-| EXP31 | BM25-only retrieval | Lexical comparator | Not started | |
-| EXP32 | RRF hybrid retrieval | Rank-fusion baseline | Not started | |
-| EXP33 | Normalised score fusion | Fusion alternative | Not started | |
-| EXP34 | Weighted score fusion | Fusion alternative | Not started | |
+| EXP14 | Synonym expansion | Vocabulary experiment | **Accepted — promoted to serving** | ndcg@10 0.755, best of all lexical experiments. Live `/search` model version `bm25_opensearch_synonyms_qu_v1` (Stage 9 added query understanding on top), with fallback to EXP2-style Postgres search if OpenSearch is unavailable. See `experiments/EXP14_synonym_expansion/README.md`. |
+| EXP20 | LLM query parser | Optional parser comparison | Not started | Optional per architecture §14; the deterministic parser (Stage 9, `backend/app/query_understanding.py`) already met the "safe structured constraints" exit outcome — revisit only if a named problem the deterministic parser can't solve shows up. |
+| EXP21 | Description-only embeddings | Representation comparison | Rejected before running | Catalogue has no description field at all (`product.description` is always NULL). See `discarded/EXP21_description_only_embeddings/README.md`. |
+| EXP22 | Title plus description embeddings | Representation comparison | **Accepted — carried forward** | Run as title-only (no description exists). ndcg@10 0.293, best of the three representations tested. See `experiments/EXP22_title_embeddings/README.md`. |
+| EXP23 | All metadata embeddings | Representation comparison | Accepted | ndcg@10 0.218 — worse than title-only; concatenating metadata dilutes this general-purpose embedding model's representation. See `experiments/EXP23_all_metadata_embeddings/README.md`. |
+| EXP24 | Labelled structured embeddings | Representation comparison | Accepted | ndcg@10 0.258 — better than plain concatenation (EXP23) but still worse than title-only (EXP22). See `experiments/EXP24_labelled_structured_embeddings/README.md`. |
+| EXP30 | Vector-only retrieval | Semantic baseline | Accepted | Not competitive as a standalone ranker (ndcg@10 0.293 vs BM25's 0.755) but found relevant candidates BM25 missed entirely on 5/15 queries (G6 evidence). See `experiments/EXP30_vector_only_retrieval/README.md`. |
+| EXP31 | BM25-only retrieval | Lexical comparator | Accepted | = EXP14, referenced under this ID for the Stage 10/11 comparison. See `experiments/EXP31_bm25_only_retrieval/README.md`. |
+| EXP32 | RRF hybrid retrieval | Rank-fusion baseline | Not started | Fusion algorithm implemented and unit-tested (`search/fusion.py`) ahead of time; not yet run against real retrieval results. |
+| EXP33 | Normalised score fusion | Fusion alternative | Not started | Same — `search/fusion.py:normalised_score_fusion` implemented and unit-tested, not yet run. |
+| EXP34 | Weighted score fusion | Fusion alternative | Not started | Same — `search/fusion.py:weighted_score_fusion` implemented and unit-tested, not yet run. |
 | EXP40 | Simple pointwise model | Learned baseline | Not started | |
 | EXP41 | Tree-based pointwise model | Learned baseline | Not started | |
 | EXP43 | LightGBM LambdaRank | Ranking candidate | Not started | |
