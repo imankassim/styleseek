@@ -1,4 +1,4 @@
-# ADR-0001: Baseline technology stack
+# ADR-1: Baseline technology stack
 
 - Status: Accepted
 - Date: 2026-09-07

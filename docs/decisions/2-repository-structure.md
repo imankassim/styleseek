@@ -1,4 +1,4 @@
-# ADR-0002: Repository and artefact structure
+# ADR-2: Repository and artefact structure
 
 - Status: Accepted
 - Date: 2026-09-07

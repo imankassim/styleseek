@@ -1,4 +1,4 @@
-# ADR-NNNN: <Short title>
+# ADR-N: <Short title>
 
 - Status: Proposed | Accepted | Superseded by ADR-XXXX | Rejected
 - Date: YYYY-MM-DD
