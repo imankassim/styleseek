@@ -21,4 +21,4 @@ def get_opensearch_url() -> str:
 
 
 def get_client() -> OpenSearch:
-    return OpenSearch(hosts=[get_opensearch_url()], use_ssl=True, verify_certs=True)
+    return OpenSearch(hosts=[get_opensearch_url()], use_ssl=True, verify_certs=True, timeout=20)
