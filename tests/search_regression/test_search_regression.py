@@ -99,6 +99,28 @@ def test_category_is_not_hard_filtered(client):
     assert any("wedding" in t.lower() for t in titles)
 
 
+def test_results_have_no_duplicate_titles(client):
+    """Regression-protects Stage 12's duplicate control: before it, "black nike shoes"
+    returned several identical "Nike Men Black Shoes" cards (different product_ids, same
+    display) — real, visible, screenshotted evidence of the problem this fixed."""
+    resp = client.get("/search", params={"q": "black nike shoes"})
+    titles = [r["title"] for r in resp.json()["results"]]
+    assert len(titles) == len(set(titles))
+
+
+def test_out_of_stock_products_are_excluded_by_default(client):
+    resp = client.get("/search", params={"q": "nike"})
+    assert all(r["in_stock"] for r in resp.json()["results"])
+
+
+def test_size_eligibility_only_returns_products_with_that_size(client):
+    resp = client.get("/search", params={"q": "red dress size M"})
+    body = resp.json()
+    assert body["interpretation"]["size"] == "M"
+    assert len(body["results"]) > 0
+    assert all("M" in r["sizes"] for r in body["results"])
+
+
 def test_every_response_carries_a_traceable_version(client):
     """Every result response includes a search request ID and model/configuration version
     (FR-04) — checked as a regression, not just in the general contract test, because a
