@@ -9,7 +9,7 @@ progress from git log alone.
 |---|---|---|---|
 | 1 | Create project controls | Done | — |
 | 2 | Build the visible search journey | Done | G1 met — idle/loading/error/empty/success states verified in browser, no console errors |
-| 3 | Create primitive baselines | Not started | G1 (shared) |
+| 3 | Create primitive baselines | Done | EXP1 (any-hit 0.30/10), EXP2 (0.90/10, several hollow hits) — see `experiments/experiment_register.md` |
 | 4 | Build product foundation | Not started | G2 |
 | 5 | Connect the application | Not started | G3 |
 | 6 | Complete search-related commerce | Not started | — |
