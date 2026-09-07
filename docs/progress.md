@@ -13,7 +13,7 @@ progress from git log alone.
 | 4 | Build product foundation | Done | G2 met — 44,446 products / 216,108 variants ingested from the Kaggle "small" dataset into Neon Postgres, 0 rejected, 7/7 data quality tests pass (`tests/data_quality/test_catalogue.py`) |
 | 5 | Connect the application | Done | G3 met — FastAPI (`/health`, `/products`, `/products/{id}`, `/search`) connected to the real Postgres catalogue; frontend calls the real API end-to-end (verified in browser); 15/15 backend + integration tests pass |
 | 6 | Complete search-related commerce | Done | Product detail page (size selection, add-to-basket), basket simulation (localStorage), `/browse` (category/price filters, sort, pagination) — full journey verified in browser end-to-end, no console errors |
-| 7 | Instrument and label | Not started | — |
+| 7 | Instrument and label | Done | Anonymous session cookies, `search_request`/`event` logging, batched impression/click tracking (verified in browser + DB), relevance rubric + 18-query labelled set (58 verified product ids, train/val/test split) |
 | 8 | Create lexical baseline | Not started | G4, G5 |
 | 9 | Understand queries | Not started | — |
 | 10 | Add semantic retrieval | Not started | G6 |
