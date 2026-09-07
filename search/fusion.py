@@ -26,3 +26,48 @@ def reciprocal_rank_fusion(
             scores[doc_id] = scores.get(doc_id, 0.0) + 1.0 / (k + rank)
 
     return sorted(scores.keys(), key=lambda doc_id: scores[doc_id], reverse=True)
+
+
+def min_max_normalise(scored: dict[str, float]) -> dict[str, float]:
+    """Rescales raw scores from one retrieval method into [0, 1] so they're comparable across
+    methods whose raw scales differ wildly (BM25: unbounded, typically single digits to tens;
+    cosine similarity: bounded [-1, 1]) — the prerequisite for EXP33 (normalised score fusion)
+    and EXP34 (weighted score fusion), neither of which is safe to do on raw scores directly.
+    """
+    if not scored:
+        return {}
+    values = list(scored.values())
+    lo, hi = min(values), max(values)
+    if hi == lo:
+        # Every document scored identically (including the single-document case) — there's no
+        # relative signal to preserve, so treat them as equally, maximally relevant rather than
+        # dividing by zero.
+        return dict.fromkeys(scored, 1.0)
+    return {doc_id: (score - lo) / (hi - lo) for doc_id, score in scored.items()}
+
+
+def normalised_score_fusion(scored_lists: list[dict[str, float]]) -> list[str]:
+    """EXP33: min-max normalise each list's scores independently, then sum. A document absent
+    from a list contributes 0 for that list, not a penalty beyond that."""
+    combined: dict[str, float] = {}
+    for scored in scored_lists:
+        normalised = min_max_normalise(scored)
+        for doc_id, score in normalised.items():
+            combined[doc_id] = combined.get(doc_id, 0.0) + score
+    return sorted(combined.keys(), key=lambda doc_id: combined[doc_id], reverse=True)
+
+
+def weighted_score_fusion(scored_lists: list[dict[str, float]], weights: list[float]) -> list[str]:
+    """EXP34: like normalised_score_fusion, but each list's normalised score is scaled by an
+    explicit weight before summing — e.g. weighting lexical evidence above semantic, or vice
+    versa, rather than trusting them equally by default."""
+    if len(scored_lists) != len(weights):
+        msg = "scored_lists and weights must be the same length"
+        raise ValueError(msg)
+
+    combined: dict[str, float] = {}
+    for scored, weight in zip(scored_lists, weights, strict=True):
+        normalised = min_max_normalise(scored)
+        for doc_id, score in normalised.items():
+            combined[doc_id] = combined.get(doc_id, 0.0) + weight * score
+    return sorted(combined.keys(), key=lambda doc_id: combined[doc_id], reverse=True)
