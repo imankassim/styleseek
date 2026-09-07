@@ -1,23 +1,56 @@
-"""GET /products and GET /products/{product_id}."""
+"""GET /products, GET /products/{product_id}, GET /categories."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg import Connection
 
 from app.db import get_connection
-from app.schemas import ProductDetail, ProductListResponse, ProductResult, ProductVariant
+from app.schemas import (
+    CategoryListResponse,
+    CategorySummary,
+    ProductDetail,
+    ProductListResponse,
+    ProductResult,
+    ProductVariant,
+)
 
 router = APIRouter()
+
+SORT_OPTIONS = {
+    "relevance": "p.product_id",
+    "price_asc": "p.price ASC, p.product_id",
+    "price_desc": "p.price DESC, p.product_id",
+}
 
 
 @router.get("/products", response_model=ProductListResponse)
 def list_products(
     category: str | None = None,
+    min_price: float | None = Query(default=None, ge=0),
+    max_price: float | None = Query(default=None, ge=0),
+    in_stock_only: bool = False,
+    sort: str = Query(default="relevance", pattern="^(relevance|price_asc|price_desc)$"),
     limit: int = Query(default=24, le=100),
     offset: int = Query(default=0, ge=0),
     conn: Connection = Depends(get_connection),
 ) -> ProductListResponse:
-    where = "WHERE p.category = %s" if category else ""
-    params: list = [category] if category else []
+    conditions = []
+    params: list = []
+    if category:
+        conditions.append("p.category = %s")
+        params.append(category)
+    if min_price is not None:
+        conditions.append("p.price >= %s")
+        params.append(min_price)
+    if max_price is not None:
+        conditions.append("p.price <= %s")
+        params.append(max_price)
+    if in_stock_only:
+        conditions.append(
+            "EXISTS (SELECT 1 FROM product_variant v2 "
+            "WHERE v2.product_id = p.product_id AND v2.stock_quantity > 0)"
+        )
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    order_by = SORT_OPTIONS[sort]
 
     with conn.cursor() as cur:
         cur.execute(f"SELECT COUNT(*) FROM product p {where}", params)  # noqa: S608
@@ -40,7 +73,7 @@ def list_products(
             JOIN product_variant v ON v.product_id = p.product_id
             {where}
             GROUP BY p.product_id, p.title, p.brand, p.category, p.price, p.image_filename, pc.colour
-            ORDER BY p.product_id
+            ORDER BY {order_by}
             LIMIT %s OFFSET %s
             """,  # noqa: S608
             [*params, limit, offset],
@@ -63,6 +96,24 @@ def list_products(
     ]
 
     return ProductListResponse(total=total, limit=limit, offset=offset, results=results)
+
+
+@router.get("/categories", response_model=CategoryListResponse)
+def list_categories(conn: Connection = Depends(get_connection)) -> CategoryListResponse:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT category, COUNT(*) AS n
+            FROM product
+            GROUP BY category
+            ORDER BY n DESC, category
+            """
+        )
+        rows = cur.fetchall()
+
+    return CategoryListResponse(
+        categories=[CategorySummary(category=row[0], product_count=row[1]) for row in rows]
+    )
 
 
 @router.get("/products/{product_id}", response_model=ProductDetail)

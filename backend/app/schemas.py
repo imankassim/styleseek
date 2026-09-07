@@ -59,3 +59,12 @@ class ProductListResponse(BaseModel):
     limit: int
     offset: int
     results: list[ProductResult]
+
+
+class CategorySummary(BaseModel):
+    category: str
+    product_count: int
+
+
+class CategoryListResponse(BaseModel):
+    categories: list[CategorySummary]

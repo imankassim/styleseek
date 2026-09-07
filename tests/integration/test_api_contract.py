@@ -76,6 +76,49 @@ def test_product_list_pagination(client):
     assert len(body["results"]) == 5
 
 
+def test_product_list_category_filter(client):
+    resp = client.get("/products", params={"category": "dress", "limit": 10})
+    body = resp.json()
+    assert body["total"] > 0
+    assert all(r["category"] == "dress" for r in body["results"])
+
+
+def test_product_list_price_filter(client):
+    resp = client.get("/products", params={"min_price": 20, "max_price": 60, "limit": 20})
+    body = resp.json()
+    assert len(body["results"]) > 0
+    assert all(20 <= r["price"] <= 60 for r in body["results"])
+
+
+def test_product_list_sort_price_desc(client):
+    resp = client.get("/products", params={"sort": "price_desc", "limit": 20})
+    prices = [r["price"] for r in resp.json()["results"]]
+    assert prices == sorted(prices, reverse=True)
+
+
+def test_product_list_sort_price_asc(client):
+    resp = client.get("/products", params={"sort": "price_asc", "limit": 20})
+    prices = [r["price"] for r in resp.json()["results"]]
+    assert prices == sorted(prices)
+
+
+def test_product_list_in_stock_only_total_is_consistent(client):
+    """Regression check: `total` must reflect the same filter as `results`, not just the
+    unfiltered product count — this broke once with a HAVING-based filter."""
+    resp = client.get("/products", params={"in_stock_only": True, "limit": 100})
+    body = resp.json()
+    unfiltered_total = client.get("/products", params={"limit": 1}).json()["total"]
+    assert 0 < body["total"] <= unfiltered_total
+
+
+def test_categories_endpoint(client):
+    resp = client.get("/categories")
+    assert resp.status_code == 200
+    categories = resp.json()["categories"]
+    assert len(categories) > 0
+    assert all("category" in c and "product_count" in c for c in categories)
+
+
 def test_product_detail_found(client):
     list_resp = client.get("/products", params={"limit": 1})
     product_id = list_resp.json()["results"][0]["product_id"]
