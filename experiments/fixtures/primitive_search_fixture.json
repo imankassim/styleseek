@@ -1,0 +1,29 @@
+{
+  "_readme": "Small, entirely synthetic fixture used only for Stage 3 primitive-search baselines (EXP1, EXP2). Not the frozen labelled query set from Stage 7/8 (G4) — this is illustrative and small on purpose, chosen to exercise the target journeys in docs/architecture/STYLESEEK_ARCHITECTURE.md §2.3.",
+  "products": [
+    { "product_id": "mock-001", "title": "Adidas Cloudline Trainers", "brand": "Adidas", "category": "trainers", "colour": "black", "occasion": "casual", "price": 64, "petite": false },
+    { "product_id": "mock-002", "title": "Satin Midi Dress", "brand": "Northfield", "category": "dress", "colour": "green", "occasion": "evening", "price": 42, "petite": false },
+    { "product_id": "mock-003", "title": "Wedding Guest Wrap Dress", "brand": "Marlowe & Co", "category": "dress", "colour": "green", "occasion": "wedding guest", "price": 58, "petite": false },
+    { "product_id": "mock-004", "title": "Petite Tailored Work Trousers", "brand": "Halcyon", "category": "trousers", "colour": "black", "occasion": "work", "price": 36, "petite": true },
+    { "product_id": "mock-005", "title": "Neutral Knit Midi Dress", "brand": "Northfield", "category": "dress", "colour": "beige", "occasion": "casual", "price": 39, "petite": false },
+    { "product_id": "mock-006", "title": "Smart Casual Blazer", "brand": "Halcyon", "category": "blazer", "colour": "navy", "occasion": "smart casual", "price": 72, "petite": false },
+    { "product_id": "mock-007", "title": "Classic Leather Trainers", "brand": "Marlowe & Co", "category": "trainers", "colour": "white", "occasion": "casual", "price": 55, "petite": false },
+    { "product_id": "mock-008", "title": "Occasion Satin Blouse", "brand": "Marlowe & Co", "category": "top", "colour": "green", "occasion": "evening", "price": 28, "petite": false },
+    { "product_id": "mock-009", "title": "Black Tuxedo Jacket", "brand": "Halcyon", "category": "jacket", "colour": "black", "occasion": "formal", "price": 120, "petite": false },
+    { "product_id": "mock-010", "title": "Summer Wedding Guest Jumpsuit", "brand": "Northfield", "category": "jumpsuit", "colour": "blue", "occasion": "wedding guest", "price": 65, "petite": false },
+    { "product_id": "mock-011", "title": "Black Ankle Boots", "brand": "Marlowe & Co", "category": "boots", "colour": "black", "occasion": "casual", "price": 80, "petite": false },
+    { "product_id": "mock-012", "title": "Cream Wide-Leg Trousers", "brand": "Halcyon", "category": "trousers", "colour": "cream", "occasion": "smart casual", "price": 45, "petite": false }
+  ],
+  "queries": [
+    { "query_id": "q1", "query": "black adidas trainers", "type": "exact", "expected_relevant": ["mock-001"] },
+    { "query_id": "q2", "query": "green satin midi dress size 12", "type": "attribute", "expected_relevant": ["mock-002"] },
+    { "query_id": "q3", "query": "smart casual outfit for a summer wedding", "type": "occasion", "expected_relevant": ["mock-006", "mock-010"] },
+    { "query_id": "q4", "query": "petite black work trousers under £40", "type": "constraint", "expected_relevant": ["mock-004"] },
+    { "query_id": "q5", "query": "grren satn midi drss", "type": "typo", "expected_relevant": ["mock-002"] },
+    { "query_id": "q6", "query": "purple waterproof tuxedo", "type": "no_result", "expected_relevant": [] },
+    { "query_id": "q7", "query": "midi dress", "type": "broad", "expected_relevant": ["mock-002", "mock-005"] },
+    { "query_id": "q8", "query": "wedding guest dress", "type": "attribute", "expected_relevant": ["mock-003"] },
+    { "query_id": "q9", "query": "trainers", "type": "broad", "expected_relevant": ["mock-001", "mock-007"] },
+    { "query_id": "q10", "query": "black trousers", "type": "attribute", "expected_relevant": ["mock-004"] }
+  ]
+}
