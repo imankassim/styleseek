@@ -36,3 +36,36 @@ export type SearchResponse = {
   fallbackUsed: boolean;
   results: Product[];
 };
+
+export type ProductVariant = {
+  variantId: string;
+  colour: string;
+  size: string;
+  sku: string;
+  stockQuantity: number;
+};
+
+export type ProductDetail = {
+  productId: string;
+  title: string;
+  brand: string | null;
+  category: string;
+  occasion: string | null;
+  gender: string | null;
+  price: number;
+  currency: "GBP";
+  imageAlt: string;
+  variants: ProductVariant[];
+};
+
+export type ProductListResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  results: Product[];
+};
+
+export type CategorySummary = {
+  category: string;
+  productCount: number;
+};

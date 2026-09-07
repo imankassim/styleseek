@@ -1,18 +1,5 @@
-import type { Product, SearchResponse } from "@/types/product";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-type ApiProduct = {
-  product_id: string;
-  title: string;
-  brand: string | null;
-  category: string;
-  colour: string;
-  price: number;
-  sizes: string[];
-  in_stock: boolean;
-  image_filename: string | null;
-};
+import type { SearchResponse } from "@/types/product";
+import { apiGet, toProduct, type ApiProduct } from "@/lib/api-client";
 
 type ApiSearchResponse = {
   search_request_id: string;
@@ -29,31 +16,8 @@ type ApiSearchResponse = {
   results: ApiProduct[];
 };
 
-function toProduct(p: ApiProduct): Product {
-  return {
-    productId: p.product_id,
-    title: p.title,
-    brand: p.brand,
-    category: p.category,
-    colour: p.colour,
-    price: p.price,
-    currency: "GBP",
-    sizes: p.sizes,
-    inStock: p.in_stock,
-    imageAlt: `${p.brand ? `${p.brand} ` : ""}${p.title}`,
-  };
-}
-
 export async function searchProducts(query: string): Promise<SearchResponse> {
-  const url = new URL("/search", API_BASE_URL);
-  url.searchParams.set("q", query);
-
-  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-  if (!response.ok) {
-    throw new Error(`Search request failed (${response.status}).`);
-  }
-
-  const data: ApiSearchResponse = await response.json();
+  const data = await apiGet<ApiSearchResponse>("/search", { q: query });
 
   return {
     searchRequestId: data.search_request_id,
