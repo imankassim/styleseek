@@ -75,6 +75,19 @@ PRICE_PATTERN = re.compile(
     r"(?:under|below|less than|up to|max(?:imum)?)\s*£?\s*(\d+(?:\.\d+)?)", re.IGNORECASE
 )
 
+# The catalogue's real `size` column values (`SELECT DISTINCT size FROM product_variant`) — a
+# mix of shoe sizes, waist-inch bottomwear sizes and letter tops sizes, with no numeric dress
+# sizing at all (so a query like "size 12" genuinely has nothing to match — see Stage 12's data
+# sheet note). Only extracted when preceded by the literal word "size": a bare number elsewhere
+# in the query (a price, a quantity) must never be misread as a size — same "safe filters"
+# principle as the ambiguous-category exclusions above.
+_CANONICAL_SIZES = [
+    "4", "5", "6", "7", "8", "9", "10", "11", "26", "28", "30", "32", "34", "36",
+    "XS", "S", "M", "L", "XL", "XXL", "One Size",
+]
+CONTROLLED_SIZES = {size.lower(): size for size in _CANONICAL_SIZES}
+SIZE_PATTERN = re.compile(r"\bsize\s*:?\s*([a-z0-9]+)\b", re.IGNORECASE)
+
 
 @dataclass
 class ParsedQuery:
@@ -83,9 +96,12 @@ class ParsedQuery:
     occasion: str | None = None
     gender: str | None = None
     max_price: float | None = None
+    size: str | None = None
 
     def is_empty(self) -> bool:
-        return not any((self.category, self.colour, self.occasion, self.gender, self.max_price))
+        return not any(
+            (self.category, self.colour, self.occasion, self.gender, self.max_price, self.size)
+        )
 
 
 def _find_first(text_lower: str, vocabulary: list[str]) -> str | None:
@@ -110,10 +126,19 @@ def parse_query(raw_query: str) -> ParsedQuery:
                 category = real_category
                 break
 
+    size = None
+    if "one size" in text_lower:
+        size = "One Size"
+    else:
+        size_match = SIZE_PATTERN.search(text_lower)
+        if size_match:
+            size = CONTROLLED_SIZES.get(size_match.group(1).lower())
+
     return ParsedQuery(
         category=category,
         colour=_find_first(text_lower, CONTROLLED_COLOURS),
         occasion=_find_first(text_lower, CONTROLLED_OCCASIONS),
         gender=_find_first(text_lower, CONTROLLED_GENDERS),
         max_price=max_price,
+        size=size,
     )

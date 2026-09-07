@@ -106,3 +106,37 @@ def test_is_empty_true_when_nothing_extracted():
 
 def test_is_empty_false_when_something_extracted():
     assert parse_query("red dress").is_empty() is False
+
+
+def test_size_extraction_letter():
+    assert parse_query("red dress size M").size == "M"
+
+
+def test_size_extraction_numeric():
+    assert parse_query("black shoes size 9").size == "9"
+
+
+def test_size_extraction_case_insensitive_normalises_to_canonical_case():
+    assert parse_query("red dress size xl").size == "XL"
+
+
+def test_size_extraction_one_size():
+    assert parse_query("black belt size one size").size == "One Size"
+
+
+def test_size_not_extracted_without_the_word_size():
+    # A bare number must never be misread as a size — that's what the price pattern is for,
+    # and plenty of queries contain numbers that aren't sizes at all (quantities, years, etc.).
+    assert parse_query("top 10 red dresses").size is None
+
+
+def test_size_not_extracted_when_value_outside_controlled_vocabulary():
+    # "size 12" has nothing to match — this catalogue has no numeric dress sizing at all
+    # (see CONTROLLED_SIZES) — must not fabricate a match.
+    assert parse_query("green satin midi dress size 12").size is None
+
+
+def test_size_does_not_get_confused_with_price():
+    parsed = parse_query("red dress size M under £50")
+    assert parsed.size == "M"
+    assert parsed.max_price == 50.0
