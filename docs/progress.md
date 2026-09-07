@@ -14,7 +14,7 @@ progress from git log alone.
 | 5 | Connect the application | Done | G3 met — FastAPI (`/health`, `/products`, `/products/{id}`, `/search`) connected to the real Postgres catalogue; frontend calls the real API end-to-end (verified in browser); 15/15 backend + integration tests pass |
 | 6 | Complete search-related commerce | Done | Product detail page (size selection, add-to-basket), basket simulation (localStorage), `/browse` (category/price filters, sort, pagination) — full journey verified in browser end-to-end, no console errors |
 | 7 | Instrument and label | Done | Anonymous session cookies, `search_request`/`event` logging, batched impression/click tracking (verified in browser + DB), relevance rubric + 18-query labelled set (58 verified product ids, train/val/test split) |
-| 8 | Create lexical baseline | Not started | G4, G5 |
+| 8 | Create lexical baseline | Done | G4 met (evaluation harness + frozen 18-query judgment set), G5 met — EXP14 (BM25 boosted + synonyms) promoted to serving, ndcg@10 0.755 vs EXP10's Postgres comparison at 0.355 (+113%). 45/45 tests pass including a failure-injection test for the OpenSearch→Postgres fallback |
 | 9 | Understand queries | Not started | — |
 | 10 | Add semantic retrieval | Not started | G6 |
 | 11 | Build hybrid retrieval | Not started | G7 |
@@ -33,10 +33,16 @@ progress from git log alone.
 - Using the *small* Kaggle dataset variant (`fashion-product-images-small`), not the originally
   linked full one — disk space on this machine couldn't fit the full 23.1GB archive. Same
   catalogue/metadata either way; only image resolution differs (irrelevant to search/ranking).
-- Database is a managed free-tier Neon Postgres project (no local Postgres/Docker installed) —
-  connection string lives only in git-ignored `database/.env`.
-- `/search`'s retrieval is a deliberate placeholder (`token_intersection_postgres_v0` — SQL port
-  of Stage 3's EXP2), not BM25/lexical work yet. EXP10 (Postgres full-text search) and BM25
-  tuning are still "Not started" in the experiment register — that's Stage 8, not done early.
+- Database is a managed free-tier Neon Postgres project; search index is a managed free-tier
+  Bonsai OpenSearch project (no local Postgres/OpenSearch/Docker installed) — both connection
+  strings live only in git-ignored `database/.env`.
+- `/search` now serves from OpenSearch (`bm25_opensearch_synonyms_v1`, EXP14's config), with an
+  automatic fallback to the old Postgres placeholder (`token_intersection_postgres_v0`) if
+  OpenSearch is unreachable — `fallback_used` in the response says which one actually served it.
 - To run locally: `python backend/run.py` (port 8000) and `npm run dev` in `frontend/` (port
-  3000) — both need `database/.env` (or `backend/.env`) with `DATABASE_URL` set.
+  3000) — both need `database/.env` (or `backend/.env`) with `DATABASE_URL` and `OPENSEARCH_URL`
+  set. Rebuild the search index after a catalogue change with `python search/index.py` (base
+  index) and `python experiments/EXP14_synonym_expansion/run.py` (the one actually served).
+- Known gap, deliberately not fixed yet: plain BM25 always returns *something*, even for a
+  genuinely no-result query — see `tests/search_regression/test_search_regression.py`. Real
+  query understanding / eligibility rules (Stage 9 / Stage 12) are where this gets solved.
