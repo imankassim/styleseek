@@ -1,5 +1,5 @@
 {
-  "_readme": "Hand-built labelled query set (architecture §8.1 'Relevance judgment', §3.3). Grading rules and rationale: relevance_rubric.md. Every graded product was looked up against the live Postgres catalogue (Stage 4 ingestion) before grading — not guessed. Consumed by the Stage 8 evaluation harness (NDCG@10, Recall@50). Do not tune retrieval/fusion/ranking against `split: test` queries before the final held-out evaluation (Stage 16) — see relevance_rubric.md.",
+  "_readme": "Hand-built labelled query set (architecture §8.1 'Relevance judgment', §3.3). Grading rules and rationale: relevance_rubric.md. Every graded product was looked up against the live Postgres catalogue (Stage 4 ingestion) before grading — not guessed. Consumed by the Stage 8 evaluation harness (NDCG@10, Recall@50). Do not tune retrieval/fusion/ranking against `split: test` queries before the final held-out evaluation (Stage 16) — see relevance_rubric.md. Pooled: candidates were also gathered from EXP10 (Postgres full-text) and EXP12 (BM25 boosted) result lists and graded, to avoid the classic IR 'pooling bias' where only hand-picked candidates get judged and a genuinely good but unpicked result scores as irrelevant by default. A second, more thorough pooling pass gathered candidates from EXP10/EXP12/EXP13/EXP14's actual result lists across all 18 queries and graded the union, after repeated cases where a genuinely good but ungraded result was scoring as irrelevant by default.",
   "queries": [
     {
       "query_id": "rj1",
@@ -7,10 +7,76 @@
       "type": "exact",
       "split": "train",
       "graded_products": [
-        { "product_id": "12691", "title": "Nike Men Dual Fusion Grey Sports Shoes", "grade": 3 },
-        { "product_id": "12692", "title": "Nike Men Transform Black Sports Shoes", "grade": 3 },
-        { "product_id": "10639", "title": "Nike Men Nike Capri II Black Casual Shoes", "grade": 2 },
-        { "product_id": "10003", "title": "Nike Women As Nike Eleme White T-Shirt", "grade": 0 }
+        {
+          "product_id": "12691",
+          "title": "Nike Men Dual Fusion Grey Sports Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "12692",
+          "title": "Nike Men Transform Black Sports Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "10639",
+          "title": "Nike Men Nike Capri II Black Casual Shoes",
+          "grade": 2
+        },
+        {
+          "product_id": "10003",
+          "title": "Nike Women As Nike Eleme White T-Shirt",
+          "grade": 0
+        },
+        {
+          "product_id": "38568",
+          "title": "Nike Men Black Running Shorts",
+          "grade": 1
+        },
+        {
+          "product_id": "30606",
+          "title": "Nike Men Running Blue Shorts",
+          "grade": 1
+        },
+        {
+          "product_id": "31446",
+          "title": "Nike Boys Running Green Jersey",
+          "grade": 1
+        },
+        {
+          "product_id": "31448",
+          "title": "Nike Boys Running Blue Shorts",
+          "grade": 1
+        },
+        {
+          "product_id": "31451",
+          "title": "Nike Men Running Red Jersey",
+          "grade": 1
+        },
+        {
+          "product_id": "31457",
+          "title": "Nike Men Running Black Shorts",
+          "grade": 1
+        },
+        {
+          "product_id": "11276",
+          "title": "Nike Men Running Maroon Sweatshirt",
+          "grade": 1
+        },
+        {
+          "product_id": "15615",
+          "title": "Nike Men Running Red Jerseys",
+          "grade": 1
+        },
+        {
+          "product_id": "15646",
+          "title": "Nike Men Running Grey Jerseys",
+          "grade": 1
+        },
+        {
+          "product_id": "31458",
+          "title": "Nike Men Running Grey Shorts",
+          "grade": 1
+        }
       ]
     },
     {
@@ -19,11 +85,71 @@
       "type": "exact",
       "split": "train",
       "graded_products": [
-        { "product_id": "10639", "title": "Nike Men Nike Capri II Black Casual Shoes", "grade": 3 },
-        { "product_id": "12692", "title": "Nike Men Transform Black Sports Shoes", "grade": 3 },
-        { "product_id": "12695", "title": "Nike Men Air Press Black Sports Shoes", "grade": 3 },
-        { "product_id": "12693", "title": "Nike Women Transform White Sports Shoes", "grade": 1 },
-        { "product_id": "10004", "title": "Nike Men As 7 Sw Temp Grey Shorts", "grade": 0 }
+        {
+          "product_id": "10639",
+          "title": "Nike Men Nike Capri II Black Casual Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "12692",
+          "title": "Nike Men Transform Black Sports Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "12695",
+          "title": "Nike Men Air Press Black Sports Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "12693",
+          "title": "Nike Women Transform White Sports Shoes",
+          "grade": 1
+        },
+        {
+          "product_id": "10004",
+          "title": "Nike Men As 7 Sw Temp Grey Shorts",
+          "grade": 0
+        },
+        {
+          "product_id": "38648",
+          "title": "Nike Men Black Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "41210",
+          "title": "Nike Men Black Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "42043",
+          "title": "Nike Men Black Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "44233",
+          "title": "Nike Men Black Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "9386",
+          "title": "Nike Women Black Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "10640",
+          "title": "Nike Men Nike Elite Black Casual Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "5469",
+          "title": "Nike Men's Nike Streetgato Black Shoe",
+          "grade": 3
+        },
+        {
+          "product_id": "5483",
+          "title": "Nike Men's Nike Streegato Black Shoe",
+          "grade": 3
+        }
       ]
     },
     {
@@ -32,10 +158,106 @@
       "type": "exact",
       "split": "train",
       "graded_products": [
-        { "product_id": "12723", "title": "ADIDAS Men Streak White Sports Shoes", "grade": 3 },
-        { "product_id": "12720", "title": "ADIDAS Unisex Casual Black Sandals", "grade": 1 },
-        { "product_id": "10056", "title": "ADIDAS Men Cfc Pes Black Tracksuits", "grade": 0 },
-        { "product_id": "11259", "title": "ADIDAS Men Nba Celtics Black Caps", "grade": 0 }
+        {
+          "product_id": "12723",
+          "title": "ADIDAS Men Streak White Sports Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "12720",
+          "title": "ADIDAS Unisex Casual Black Sandals",
+          "grade": 1
+        },
+        {
+          "product_id": "10056",
+          "title": "ADIDAS Men Cfc Pes Black Tracksuits",
+          "grade": 0
+        },
+        {
+          "product_id": "11259",
+          "title": "ADIDAS Men Nba Celtics Black Caps",
+          "grade": 0
+        },
+        {
+          "product_id": "46111",
+          "title": "ADIDAS Men Blue ADIDAS Tread Slippers",
+          "grade": 1
+        },
+        {
+          "product_id": "3473",
+          "title": "ADIDAS Black Sipper",
+          "grade": 0
+        },
+        {
+          "product_id": "2246",
+          "title": "ADIDAS Black Backpack",
+          "grade": 0
+        },
+        {
+          "product_id": "2360",
+          "title": "ADIDAS White Cap",
+          "grade": 0
+        },
+        {
+          "product_id": "2362",
+          "title": "ADIDAS Black Cap",
+          "grade": 0
+        },
+        {
+          "product_id": "2363",
+          "title": "ADIDAS Black Backpack",
+          "grade": 0
+        },
+        {
+          "product_id": "2364",
+          "title": "ADIDAS Blue Cap",
+          "grade": 0
+        },
+        {
+          "product_id": "13657",
+          "title": "ADIDAS White  Sports Shoe",
+          "grade": 3
+        },
+        {
+          "product_id": "39892",
+          "title": "ADIDAS Men Brown Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "40315",
+          "title": "ADIDAS Unisex White Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "23840",
+          "title": "ADIDAS Men Brown Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "53633",
+          "title": "ADIDAS Men Olive Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "53635",
+          "title": "ADIDAS Men Blue Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "53636",
+          "title": "ADIDAS Men Black Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "53637",
+          "title": "ADIDAS Men White Shoes",
+          "grade": 3
+        },
+        {
+          "product_id": "53639",
+          "title": "ADIDAS Men Black Shoes",
+          "grade": 3
+        }
       ]
     },
     {
@@ -44,12 +266,81 @@
       "type": "attribute",
       "split": "train",
       "graded_products": [
-        { "product_id": "18736", "title": "Arrow Woman Rima Red Dress", "grade": 3 },
-        { "product_id": "25908", "title": "Femella Women Red Dress", "grade": 3 },
-        { "product_id": "16567", "title": "AND by Anita Dongre Women Printed Red Dresses", "grade": 3 },
-        { "product_id": "29167", "title": "United Colors of Benetton Girls Red Polka Dot Dress", "grade": 2 },
-        { "product_id": "23050", "title": "Arrow Woman Multi Coloured Floral Dress", "grade": 1 },
-        { "product_id": "10046", "title": "Puma Men Heroes Graphic Green Tshirts", "grade": 0 }
+        {
+          "product_id": "18736",
+          "title": "Arrow Woman Rima Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "25908",
+          "title": "Femella Women Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "16567",
+          "title": "AND by Anita Dongre Women Printed Red Dresses",
+          "grade": 3
+        },
+        {
+          "product_id": "29167",
+          "title": "United Colors of Benetton Girls Red Polka Dot Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "23050",
+          "title": "Arrow Woman Multi Coloured Floral Dress",
+          "grade": 1
+        },
+        {
+          "product_id": "10046",
+          "title": "Puma Men Heroes Graphic Green Tshirts",
+          "grade": 0
+        },
+        {
+          "product_id": "41571",
+          "title": "AND Women Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "42640",
+          "title": "W Women Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "57059",
+          "title": "Elle Women Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "45777",
+          "title": "Remanika Women Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "39217",
+          "title": "Femella Women Floral Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "33199",
+          "title": "Sepia Women Printed Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "34578",
+          "title": "Tonga Women Printed Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "48084",
+          "title": "French Connection Women Red Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "40402",
+          "title": "Tonga Women Grey & Red Dress",
+          "grade": 2
+        }
       ]
     },
     {
@@ -58,10 +349,111 @@
       "type": "attribute",
       "split": "train",
       "graded_products": [
-        { "product_id": "31877", "title": "Fabindia Women Green Printed Kota Cotton Saree", "grade": 3 },
-        { "product_id": "34302", "title": "Fabindia Women H& Printed Green Silk Sari", "grade": 3 },
-        { "product_id": "34993", "title": "Fabindia Women H& Printed Olive Green Sari", "grade": 2 },
-        { "product_id": "10164", "title": "Carrera Men Green strap witrh green dial Green Watches", "grade": 0 }
+        {
+          "product_id": "31877",
+          "title": "Fabindia Women Green Printed Kota Cotton Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "34302",
+          "title": "Fabindia Women H& Printed Green Silk Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "34993",
+          "title": "Fabindia Women H& Printed Olive Green Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "10164",
+          "title": "Carrera Men Green strap witrh green dial Green Watches",
+          "grade": 0
+        },
+        {
+          "product_id": "51091",
+          "title": "Satya Paul Green Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "51118",
+          "title": "Satya Paul Green Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "45987",
+          "title": "Fabindia Green Mangalagiri Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "45989",
+          "title": "Fabindia Green Mangalagiri Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "49925",
+          "title": "Fabindia Green Maheshwari Zari Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "51101",
+          "title": "Satya Paul Green Printed Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "45994",
+          "title": "Fabindia Teal Green Mangalgiri Saree",
+          "grade": 2
+        },
+        {
+          "product_id": "45999",
+          "title": "Fabindia Green Self-Striped Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "46001",
+          "title": "Fabindia Green Printed Kota Saree",
+          "grade": 3
+        },
+        {
+          "product_id": "52934",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "52954",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "52956",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "52959",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "52967",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "52982",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "53019",
+          "title": "FNF Green Sari",
+          "grade": 3
+        },
+        {
+          "product_id": "57975",
+          "title": "Prafful Green Sari",
+          "grade": 3
+        }
       ]
     },
     {
@@ -70,10 +462,86 @@
       "type": "attribute",
       "split": "train",
       "graded_products": [
-        { "product_id": "10015", "title": "Locomotive Men American Glory White Tshirts", "grade": 2 },
-        { "product_id": "10027", "title": "Nike Women's White Tshirt", "grade": 2 },
-        { "product_id": "10003", "title": "Nike Women As Nike Eleme White T-Shirt", "grade": 2 },
-        { "product_id": "10000", "title": "Palm Tree Girls Sp Jace Sko White Skirts", "grade": 0 }
+        {
+          "product_id": "10015",
+          "title": "Locomotive Men American Glory White Tshirts",
+          "grade": 2
+        },
+        {
+          "product_id": "10027",
+          "title": "Nike Women's White Tshirt",
+          "grade": 2
+        },
+        {
+          "product_id": "10003",
+          "title": "Nike Women As Nike Eleme White T-Shirt",
+          "grade": 2
+        },
+        {
+          "product_id": "10000",
+          "title": "Palm Tree Girls Sp Jace Sko White Skirts",
+          "grade": 0
+        },
+        {
+          "product_id": "53269",
+          "title": "Locomotive Men White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "24610",
+          "title": "Spykar Men White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "58511",
+          "title": "Tonga Women White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "6956",
+          "title": "s.Oliver Men White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "28789",
+          "title": "Denizen Men White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "31368",
+          "title": "Locomotive White T-Shirt",
+          "grade": 2
+        },
+        {
+          "product_id": "32503",
+          "title": "Scullers Men White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "46351",
+          "title": "Locomotive Men White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "21126",
+          "title": "s.Oliver Women White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "2125",
+          "title": "Lee Women White Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "20261",
+          "title": "Wrangler Men Tee White T-shirt",
+          "grade": 2
+        },
+        {
+          "product_id": "23049",
+          "title": "Arrow Woman White Shirt",
+          "grade": 3
+        }
       ]
     },
     {
@@ -82,10 +550,66 @@
       "type": "occasion",
       "split": "train",
       "graded_products": [
-        { "product_id": "16567", "title": "AND by Anita Dongre Women Printed Red Dresses", "grade": 2 },
-        { "product_id": "18736", "title": "Arrow Woman Rima Red Dress", "grade": 2 },
-        { "product_id": "10360", "title": "United Colors of Benetton Women Black Dress", "grade": 1 },
-        { "product_id": "12830", "title": "Ant Kids Peaceful Day Green Dresses", "grade": 0 }
+        {
+          "product_id": "16567",
+          "title": "AND by Anita Dongre Women Printed Red Dresses",
+          "grade": 2
+        },
+        {
+          "product_id": "18736",
+          "title": "Arrow Woman Rima Red Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "10360",
+          "title": "United Colors of Benetton Women Black Dress",
+          "grade": 1
+        },
+        {
+          "product_id": "12830",
+          "title": "Ant Kids Peaceful Day Green Dresses",
+          "grade": 0
+        },
+        {
+          "product_id": "59594",
+          "title": "FNF Rust Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59596",
+          "title": "FNF Brown Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59598",
+          "title": "FNF Brown Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59600",
+          "title": "FNF Rust Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59601",
+          "title": "FNF Brown Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59613",
+          "title": "FNF Green Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59614",
+          "title": "FNF Pink Wedding Collection Sari",
+          "grade": 2
+        },
+        {
+          "product_id": "59616",
+          "title": "FNF Purple Wedding Collection Sari",
+          "grade": 2
+        }
       ]
     },
     {
@@ -94,10 +618,51 @@
       "type": "occasion",
       "split": "val",
       "graded_products": [
-        { "product_id": "19341", "title": "United Colors of Benetton Men Solid Grey Blazer Jacket", "grade": 3 },
-        { "product_id": "20791", "title": "Basics Men Black Blazer Jacket", "grade": 3 },
-        { "product_id": "27845", "title": "Scullers For Her Black Blazer", "grade": 3 },
-        { "product_id": "13678", "title": "ADIDAS Women Blazer Sports Shoes", "grade": 0 }
+        {
+          "product_id": "19341",
+          "title": "United Colors of Benetton Men Solid Grey Blazer Jacket",
+          "grade": 3
+        },
+        {
+          "product_id": "20791",
+          "title": "Basics Men Black Blazer Jacket",
+          "grade": 3
+        },
+        {
+          "product_id": "27845",
+          "title": "Scullers For Her Black Blazer",
+          "grade": 3
+        },
+        {
+          "product_id": "13678",
+          "title": "ADIDAS Women Blazer Sports Shoes",
+          "grade": 0
+        },
+        {
+          "product_id": "46751",
+          "title": "Nautilus Men Blazer Perfume",
+          "grade": 0
+        },
+        {
+          "product_id": "20792",
+          "title": "Basics Men Beige Blazer Jacket",
+          "grade": 3
+        },
+        {
+          "product_id": "27846",
+          "title": "Scullers For Her Charcoal Blazer",
+          "grade": 3
+        },
+        {
+          "product_id": "31729",
+          "title": "Reid & Taylor Men Blue Blazer",
+          "grade": 3
+        },
+        {
+          "product_id": "31732",
+          "title": "Reid & Taylor Men Brown Blazer",
+          "grade": 3
+        }
       ]
     },
     {
@@ -106,10 +671,91 @@
       "type": "occasion",
       "split": "train",
       "graded_products": [
-        { "product_id": "10271", "title": "Clarks Women Sona Silk Leather Red Heels", "grade": 3 },
-        { "product_id": "10289", "title": "Clarks Women Soma Silk Leather Black Heels", "grade": 3 },
-        { "product_id": "10292", "title": "Clarks Women Brown Leather Heels", "grade": 2 },
-        { "product_id": "59051", "title": "Carlton London Women Black & Gold Toned Flats", "grade": 0 }
+        {
+          "product_id": "10271",
+          "title": "Clarks Women Sona Silk Leather Red Heels",
+          "grade": 3
+        },
+        {
+          "product_id": "10289",
+          "title": "Clarks Women Soma Silk Leather Black Heels",
+          "grade": 3
+        },
+        {
+          "product_id": "10292",
+          "title": "Clarks Women Brown Leather Heels",
+          "grade": 2
+        },
+        {
+          "product_id": "59051",
+          "title": "Carlton London Women Black & Gold Toned Flats",
+          "grade": 0
+        },
+        {
+          "product_id": "2876",
+          "title": "Catwalk Women Party Heeled Strap Black Heels",
+          "grade": 3
+        },
+        {
+          "product_id": "32576",
+          "title": "ONLY Women Orange Party Dress",
+          "grade": 0
+        },
+        {
+          "product_id": "44578",
+          "title": "Lee Men Blue Party Jeans",
+          "grade": 0
+        },
+        {
+          "product_id": "19287",
+          "title": "Guess Women Party Girl White Watch",
+          "grade": 0
+        },
+        {
+          "product_id": "19288",
+          "title": "Guess Women Party Girl Red Watch",
+          "grade": 0
+        },
+        {
+          "product_id": "2658",
+          "title": "Murcia Women Party Rose Pink Bag",
+          "grade": 0
+        },
+        {
+          "product_id": "5759",
+          "title": "Jealous 21 Women Black Party Top",
+          "grade": 0
+        },
+        {
+          "product_id": "5794",
+          "title": "Jealous 21 Women Party Black Top",
+          "grade": 0
+        },
+        {
+          "product_id": "9004",
+          "title": "Murcia Women Party Clutch Silver Handbags",
+          "grade": 0
+        },
+        {
+          "product_id": "39380",
+          "title": "Peter England Men Blue Party Jeans",
+          "grade": 0
+        },
+        {
+          "product_id": "39381",
+          "title": "Peter England Men Party Black Jeans",
+          "grade": 0
+        },
+        {
+          "product_id": "39386",
+          "title": "Peter England Men Party Blue Jeans",
+          "grade": 0
+        },
+        {
+          "product_id": "4224",
+          "title": "Probase Men's Party Pink T-shirt",
+          "grade": 0
+        }
       ]
     },
     {
@@ -118,10 +764,66 @@
       "type": "attribute",
       "split": "train",
       "graded_products": [
-        { "product_id": "10257", "title": "John Miller Men Solid Type Black Trousers", "grade": 3 },
-        { "product_id": "29780", "title": "Basics Men Black Trousers", "grade": 3 },
-        { "product_id": "51605", "title": "Kraus Jeans Women Black Trousers", "grade": 2 },
-        { "product_id": "10006", "title": "Nike Men AS T90 Black Tshirts", "grade": 0 }
+        {
+          "product_id": "10257",
+          "title": "John Miller Men Solid Type Black Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "29780",
+          "title": "Basics Men Black Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "51605",
+          "title": "Kraus Jeans Women Black Trousers",
+          "grade": 2
+        },
+        {
+          "product_id": "10006",
+          "title": "Nike Men AS T90 Black Tshirts",
+          "grade": 0
+        },
+        {
+          "product_id": "31474",
+          "title": "Black Coffee  Brown Formal Trousers",
+          "grade": 1
+        },
+        {
+          "product_id": "39795",
+          "title": "Peter England Men Black Formal Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "39797",
+          "title": "Peter England Men Black Formal Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "39805",
+          "title": "Peter England Men Black Formal Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "39812",
+          "title": "Peter England Men Black Formal Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "26384",
+          "title": "Turtle Men Black Trousers",
+          "grade": 2
+        },
+        {
+          "product_id": "12214",
+          "title": "Basics Men Black Trousers",
+          "grade": 3
+        },
+        {
+          "product_id": "29402",
+          "title": "Genesis Men Black Trousers",
+          "grade": 2
+        }
       ]
     },
     {
@@ -130,11 +832,66 @@
       "type": "attribute",
       "split": "val",
       "graded_products": [
-        { "product_id": "45156", "title": "Casio Youth Series Men Black Marine Sports Watch MW-600F-2AVDF(A506)", "grade": 3 },
-        { "product_id": "8106", "title": "Fastrack Men Sports Analog Brown Watch", "grade": 3 },
-        { "product_id": "8140", "title": "Fastrack Women Freestyle Sports Black Watch", "grade": 3 },
-        { "product_id": "59263", "title": "Titan Women Silver Watch", "grade": 1 },
-        { "product_id": "30039", "title": "Skagen Men Black Watch", "grade": 1 }
+        {
+          "product_id": "45156",
+          "title": "Casio Youth Series Men Black Marine Sports Watch MW-600F-2AVDF(A506)",
+          "grade": 3
+        },
+        {
+          "product_id": "8106",
+          "title": "Fastrack Men Sports Analog Brown Watch",
+          "grade": 3
+        },
+        {
+          "product_id": "8140",
+          "title": "Fastrack Women Freestyle Sports Black Watch",
+          "grade": 3
+        },
+        {
+          "product_id": "59263",
+          "title": "Titan Women Silver Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "30039",
+          "title": "Skagen Men Black Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "8141",
+          "title": "Fastrack Women Freestyle Sports Analog Steel Black Watch",
+          "grade": 3
+        },
+        {
+          "product_id": "45012",
+          "title": "Maxima Men Digital Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "45013",
+          "title": "Maxima Men Digital Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "46573",
+          "title": "Timex Men Black Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "19756",
+          "title": "Ice Watch Women Flower White Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "19757",
+          "title": "Ice Watch Women Flower Black Watch",
+          "grade": 1
+        },
+        {
+          "product_id": "45202",
+          "title": "Casio Enticer Men Black Marine Sports Watch MTD-1069D-1AVDF(A657)",
+          "grade": 3
+        }
       ]
     },
     {
@@ -143,10 +900,96 @@
       "type": "attribute",
       "split": "train",
       "graded_products": [
-        { "product_id": "12830", "title": "Ant Kids Peaceful Day Green Dresses", "grade": 3 },
-        { "product_id": "12849", "title": "Ant Kids Girls Butterfly Print White Dresses", "grade": 3 },
-        { "product_id": "11261", "title": "Palm Tree Kids Girls Red Saloppette Set", "grade": 2 },
-        { "product_id": "10360", "title": "United Colors of Benetton Women Black Dress", "grade": 0 }
+        {
+          "product_id": "12830",
+          "title": "Ant Kids Peaceful Day Green Dresses",
+          "grade": 3
+        },
+        {
+          "product_id": "12849",
+          "title": "Ant Kids Girls Butterfly Print White Dresses",
+          "grade": 3
+        },
+        {
+          "product_id": "11261",
+          "title": "Palm Tree Kids Girls Red Saloppette Set",
+          "grade": 2
+        },
+        {
+          "product_id": "10360",
+          "title": "United Colors of Benetton Women Black Dress",
+          "grade": 0
+        },
+        {
+          "product_id": "38998",
+          "title": "Gini and Jony Girls Summer Paradise Pink Dress",
+          "grade": 3
+        },
+        {
+          "product_id": "4213",
+          "title": "Disney Kids Girl's Pink Summer Fun Fair Kidswear",
+          "grade": 1
+        },
+        {
+          "product_id": "4214",
+          "title": "Disney Kids Girl's Yellow Summer Fun Fair Kidswear",
+          "grade": 1
+        },
+        {
+          "product_id": "3819",
+          "title": "Disney Kids Girl's Minnie Summer Time Pink Top",
+          "grade": 1
+        },
+        {
+          "product_id": "3820",
+          "title": "Disney Kids Girl's Minnie Summer Time White Top",
+          "grade": 1
+        },
+        {
+          "product_id": "27197",
+          "title": "Doodle Kids Girl Pink Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "4717",
+          "title": "Disney Kids Girl's Summer Fun Fair Pink Teen Kidswear",
+          "grade": 1
+        },
+        {
+          "product_id": "4718",
+          "title": "Disney Kids Girl's Summer Fun Fair Yellow Teen Kidswear",
+          "grade": 1
+        },
+        {
+          "product_id": "18166",
+          "title": "Doodle Kids Girls Party Frock Purple Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "18167",
+          "title": "Doodle Kids Girls Party Frock Purple Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "18168",
+          "title": "Doodle Kids Girls Party Frock Pink Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "18169",
+          "title": "Doodle Kids Girls Party Frock Pink Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "18174",
+          "title": "Doodle Kids Girls Party Frock Lavender Dress",
+          "grade": 2
+        },
+        {
+          "product_id": "18175",
+          "title": "Doodle Kids Girls Party Frock Lavender Dress",
+          "grade": 2
+        }
       ]
     },
     {
@@ -155,10 +998,86 @@
       "type": "attribute",
       "split": "val",
       "graded_products": [
-        { "product_id": "25188", "title": "Lino Perros Women Leatherite Brown Handbag", "grade": 2 },
-        { "product_id": "25181", "title": "Lino Perros Women Leatherite Brown Handbag", "grade": 2 },
-        { "product_id": "16760", "title": "Spice Art Women Leatherette  Black Handbags", "grade": 2 },
-        { "product_id": "10199", "title": "Murcia Women Emma Black Handbags", "grade": 1 }
+        {
+          "product_id": "25188",
+          "title": "Lino Perros Women Leatherite Brown Handbag",
+          "grade": 2
+        },
+        {
+          "product_id": "25181",
+          "title": "Lino Perros Women Leatherite Brown Handbag",
+          "grade": 2
+        },
+        {
+          "product_id": "16760",
+          "title": "Spice Art Women Leatherette  Black Handbags",
+          "grade": 2
+        },
+        {
+          "product_id": "10199",
+          "title": "Murcia Women Emma Black Handbags",
+          "grade": 1
+        },
+        {
+          "product_id": "21945",
+          "title": "Murcia Women Brown Leather Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "24624",
+          "title": "Murcia Women Green Leather Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "25798",
+          "title": "Hidekraft Women Leather Green Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "26220",
+          "title": "Hidekraft Women Leather Pink Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "27037",
+          "title": "Yelloe Women Leather Brown Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "27744",
+          "title": "Murcia Women Leather Black Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "52756",
+          "title": "Fiorelli Women Red Leather Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "52766",
+          "title": "Fiorelli Women Black Leather Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "52767",
+          "title": "Fiorelli Women White Leather Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "52768",
+          "title": "Fiorelli Women Black Leather Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "27745",
+          "title": "Murcia Women Leather Black Handbag",
+          "grade": 3
+        },
+        {
+          "product_id": "2650",
+          "title": "Murcia Women Brown Leather Bag",
+          "grade": 3
+        }
       ]
     },
     {
@@ -167,10 +1086,106 @@
       "type": "attribute",
       "split": "train",
       "graded_products": [
-        { "product_id": "10438", "title": "Flying Machine Men Midrise Blue Jeans", "grade": 3 },
-        { "product_id": "11235", "title": "Flying Machine Women Midrise Blue Jeans", "grade": 3 },
-        { "product_id": "10597", "title": "Flying Machine Men Skinny Jack Blue Jeans", "grade": 3 },
-        { "product_id": "10257", "title": "John Miller Men Solid Type Black Trousers", "grade": 0 }
+        {
+          "product_id": "10438",
+          "title": "Flying Machine Men Midrise Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "11235",
+          "title": "Flying Machine Women Midrise Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "10597",
+          "title": "Flying Machine Men Skinny Jack Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "10257",
+          "title": "John Miller Men Solid Type Black Trousers",
+          "grade": 0
+        },
+        {
+          "product_id": "58222",
+          "title": "Vero Moda Women Blue Denim Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "9186",
+          "title": "Spykar Men Free Wheeler Spirit Denim Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "11520",
+          "title": "United Colors of Benetton Women Denim Black Jeans",
+          "grade": 1
+        },
+        {
+          "product_id": "39401",
+          "title": "U.S. Polo Assn. Denim Co. Men Blue Slim Straight Fit Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "25719",
+          "title": "Wrangler Women Denim Blue Handbag",
+          "grade": 0
+        },
+        {
+          "product_id": "57180",
+          "title": "Elle Women Blue Denim Tunic",
+          "grade": 1
+        },
+        {
+          "product_id": "51606",
+          "title": "Kraus Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52522",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52548",
+          "title": "Pepe Jeans Men Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "48535",
+          "title": "Wrangler Men Blue Denim Cap",
+          "grade": 0
+        },
+        {
+          "product_id": "58952",
+          "title": "Denim Men Chill Deo",
+          "grade": 0
+        },
+        {
+          "product_id": "52523",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52539",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52547",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52553",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52554",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        }
       ]
     },
     {
@@ -179,11 +1194,77 @@
       "type": "constraint",
       "split": "test",
       "graded_products": [
-        { "product_id": "25908", "title": "Femella Women Red Dress", "price": 42.16, "grade": 3 },
-        { "product_id": "29167", "title": "United Colors of Benetton Girls Red Polka Dot Dress", "price": 49.93, "grade": 2 },
-        { "product_id": "23050", "title": "Arrow Woman Multi Coloured Floral Dress", "price": 57.99, "grade": 0 },
-        { "product_id": "16567", "title": "AND by Anita Dongre Women Printed Red Dresses", "price": 84.95, "grade": 0 },
-        { "product_id": "18736", "title": "Arrow Woman Rima Red Dress", "price": 73.14, "grade": 0 }
+        {
+          "product_id": "25908",
+          "title": "Femella Women Red Dress",
+          "price": 42.16,
+          "grade": 3
+        },
+        {
+          "product_id": "29167",
+          "title": "United Colors of Benetton Girls Red Polka Dot Dress",
+          "price": 49.93,
+          "grade": 2
+        },
+        {
+          "product_id": "23050",
+          "title": "Arrow Woman Multi Coloured Floral Dress",
+          "price": 57.99,
+          "grade": 0
+        },
+        {
+          "product_id": "16567",
+          "title": "AND by Anita Dongre Women Printed Red Dresses",
+          "price": 84.95,
+          "grade": 0
+        },
+        {
+          "product_id": "18736",
+          "title": "Arrow Woman Rima Red Dress",
+          "price": 73.14,
+          "grade": 0
+        },
+        {
+          "product_id": "5371",
+          "title": "Quechua Arpenaz 50 Jr Black Red",
+          "price": 60.52,
+          "grade": 0
+        },
+        {
+          "product_id": "55086",
+          "title": "Ponds Flawless White Under Eye Cream",
+          "price": 29.37,
+          "grade": 0
+        },
+        {
+          "product_id": "41571",
+          "title": "AND Women Red Dress",
+          "price": 48.9,
+          "grade": 3
+        },
+        {
+          "product_id": "42640",
+          "title": "W Women Red Dress",
+          "price": 11.92,
+          "grade": 3
+        },
+        {
+          "product_id": "45777",
+          "title": "Remanika Women Red Dress",
+          "price": 53.02,
+          "grade": 0
+        },
+        {
+          "product_id": "57059",
+          "title": "Elle Women Red Dress",
+          "grade": 0,
+          "price": 63.52
+        },
+        {
+          "product_id": "30330",
+          "title": "Myntra Men Under Medicated Black T-shirt",
+          "grade": 0
+        }
       ]
     },
     {
@@ -193,11 +1274,51 @@
       "note": "typo of 'green shirt' — graded against the corrected intent, see relevance_rubric.md rule 3",
       "split": "test",
       "graded_products": [
-        { "product_id": "30805", "title": "Fabindia Men Striped Green Shirt", "grade": 3 },
-        { "product_id": "7158", "title": "Scullers Men  Green Check Shirt", "grade": 3 },
-        { "product_id": "14055", "title": "Flying Machine Men Check Green Shirts", "grade": 3 },
-        { "product_id": "25527", "title": "Wrangler Women Stella Green Shirt", "grade": 3 },
-        { "product_id": "6274", "title": "UCB Women's Crystal Benetton Green T-shirt", "grade": 2 }
+        {
+          "product_id": "30805",
+          "title": "Fabindia Men Striped Green Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "7158",
+          "title": "Scullers Men  Green Check Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "14055",
+          "title": "Flying Machine Men Check Green Shirts",
+          "grade": 3
+        },
+        {
+          "product_id": "25527",
+          "title": "Wrangler Women Stella Green Shirt",
+          "grade": 3
+        },
+        {
+          "product_id": "6274",
+          "title": "UCB Women's Crystal Benetton Green T-shirt",
+          "grade": 2
+        },
+        {
+          "product_id": "57961",
+          "title": "Prafful Women Black & Grren Sari",
+          "grade": 0
+        },
+        {
+          "product_id": "57969",
+          "title": "Prafful Women Black & Grren Sari",
+          "grade": 0
+        },
+        {
+          "product_id": "8397",
+          "title": "ADIDAS Men Adna 3s Shrt Kn Grey Shorts",
+          "grade": 0
+        },
+        {
+          "product_id": "9079",
+          "title": "ADIDAS Men Adna 3s Shrt Kn Black Shorts",
+          "grade": 0
+        }
       ]
     },
     {
@@ -207,9 +1328,36 @@
       "note": "typo of 'blue jeans'",
       "split": "val",
       "graded_products": [
-        { "product_id": "10438", "title": "Flying Machine Men Midrise Blue Jeans", "grade": 3 },
-        { "product_id": "10488", "title": "Flying Machine Blue Jeans", "grade": 3 },
-        { "product_id": "11235", "title": "Flying Machine Women Midrise Blue Jeans", "grade": 3 }
+        {
+          "product_id": "10438",
+          "title": "Flying Machine Men Midrise Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "10488",
+          "title": "Flying Machine Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "11235",
+          "title": "Flying Machine Women Midrise Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "51606",
+          "title": "Kraus Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52522",
+          "title": "Pepe Jeans Women Blue Jeans",
+          "grade": 3
+        },
+        {
+          "product_id": "52548",
+          "title": "Pepe Jeans Men Blue Jeans",
+          "grade": 3
+        }
       ]
     },
     {
@@ -218,7 +1366,58 @@
       "type": "no_result",
       "note": "Confirmed against the live catalogue: zero products match 'tuxedo' at all, let alone purple/waterproof. Empty graded_products is deliberate — see relevance_rubric.md rule 2.",
       "split": "test",
-      "graded_products": []
+      "graded_products": [
+        {
+          "product_id": "56167",
+          "title": "Colorbar Precision Waterproof Eye Liner",
+          "grade": 0
+        },
+        {
+          "product_id": "49105",
+          "title": "Deborah Precisione Waterproof Black Eye Liner",
+          "grade": 0
+        },
+        {
+          "product_id": "10733",
+          "title": "Murcia Women Mcc Purple Purple Handbags",
+          "grade": 0
+        },
+        {
+          "product_id": "10593",
+          "title": "Esprit Women Houston Purple Ice Purple Watches",
+          "grade": 0
+        },
+        {
+          "product_id": "8369",
+          "title": "Doodle Girl's Purple Halter Neck Purple Kidswear",
+          "grade": 0
+        },
+        {
+          "product_id": "8518",
+          "title": "Nike Women Nike Purple Tote Purple Bags",
+          "grade": 0
+        },
+        {
+          "product_id": "57953",
+          "title": "Prafful Purple Sari",
+          "grade": 0
+        },
+        {
+          "product_id": "59691",
+          "title": "Avirate Purple Bra",
+          "grade": 0
+        },
+        {
+          "product_id": "9424",
+          "title": "John Miller Men Purple Fila-Fil Purple Shirts",
+          "grade": 0
+        },
+        {
+          "product_id": "34935",
+          "title": "Fabindia Purple Dupatta",
+          "grade": 0
+        }
+      ]
     }
   ]
 }

@@ -30,6 +30,15 @@ offline evaluation harness (Stage 8, NDCG@10 / Recall@50 — architecture §3.3,
 4. **Grades are assigned by inspecting real catalogue rows**, not guessed — every product in
    `relevance_judgments.json` was looked up against the live database before grading (see the
    `source_check` note per query for how candidates were found).
+5. **Judge candidates from a pool of methods, not just one.** An unjudged product defaults to
+   grade 0 (rule 1's absence-of-evidence convention) — if the candidate pool for a query only
+   ever came from one retrieval method's own results, that method's real weaknesses get hidden
+   and every *other* method's genuinely good results get unfairly zeroed out just because nobody
+   graded them. This bit Stage 8 three times in a row (EXP10's first run, EXP13's typo query,
+   EXP14's synonym results) before the judgment set was pooled properly: candidates were
+   gathered from multiple experiments' actual top results (not only the query author's own
+   guesses) and the union graded. When adding a new query type or expanding the set for a later
+   stage, pool from at least two different retrieval methods before trusting the numbers.
 5. **This is a small, hand-built set**, not a statistically representative sample of shopper
    queries — sufficient to unit-test evaluation code and give an early evidence signal (Stage 8),
    not sufficient on its own to make strong final claims (architecture §16, "too little genuine
