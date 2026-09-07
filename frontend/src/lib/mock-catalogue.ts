@@ -1,0 +1,108 @@
+import type { Product } from "@/types/product";
+
+/**
+ * Placeholder catalogue for Stage 2 (visible search journey) only. Entirely synthetic —
+ * no relation to any real retailer or product. Replaced by the real Kaggle-derived catalogue
+ * in Stage 4 (docs/data_sheets/catalogue_data_sheet.md), served from PostgreSQL from Stage 5.
+ * Chosen to exercise the target journeys in architecture §2.3 (exact/attribute/occasion/
+ * constraint search) so the UI states can be demonstrated meaningfully before the real
+ * backend exists.
+ */
+export const MOCK_CATALOGUE: Product[] = [
+  {
+    productId: "mock-001",
+    title: "Adidas Cloudline Trainers",
+    brand: "Adidas",
+    category: "trainers",
+    colour: "black",
+    price: 64,
+    currency: "GBP",
+    sizes: ["6", "7", "8", "9", "10"],
+    inStock: true,
+    imageAlt: "Black Adidas Cloudline trainers, side view",
+  },
+  {
+    productId: "mock-002",
+    title: "Satin Midi Dress",
+    brand: "Northfield",
+    category: "dress",
+    colour: "green",
+    price: 42,
+    currency: "GBP",
+    sizes: ["8", "10", "12", "14"],
+    inStock: true,
+    imageAlt: "Green satin midi dress on a hanger",
+  },
+  {
+    productId: "mock-003",
+    title: "Wedding Guest Wrap Dress",
+    brand: "Marlowe & Co",
+    category: "dress",
+    colour: "green",
+    price: 58,
+    currency: "GBP",
+    sizes: ["6", "8", "10", "12"],
+    inStock: true,
+    imageAlt: "Emerald green wrap dress, front view",
+  },
+  {
+    productId: "mock-004",
+    title: "Petite Tailored Work Trousers",
+    brand: "Halcyon",
+    category: "trousers",
+    colour: "black",
+    price: 36,
+    currency: "GBP",
+    sizes: ["petite 8", "petite 10", "petite 12"],
+    inStock: true,
+    imageAlt: "Black tailored petite-fit trousers, flat lay",
+  },
+  {
+    productId: "mock-005",
+    title: "Neutral Knit Midi Dress",
+    brand: "Northfield",
+    category: "dress",
+    colour: "beige",
+    price: 39,
+    currency: "GBP",
+    sizes: ["8", "10", "12"],
+    inStock: true,
+    imageAlt: "Beige knit midi dress on a mannequin",
+  },
+  {
+    productId: "mock-006",
+    title: "Smart Casual Blazer",
+    brand: "Halcyon",
+    category: "blazer",
+    colour: "navy",
+    price: 72,
+    currency: "GBP",
+    sizes: ["S", "M", "L", "XL"],
+    inStock: false,
+    imageAlt: "Navy smart-casual blazer, front view",
+  },
+  {
+    productId: "mock-007",
+    title: "Classic Leather Trainers",
+    brand: "Marlowe & Co",
+    category: "trainers",
+    colour: "white",
+    price: 55,
+    currency: "GBP",
+    sizes: ["5", "6", "7", "8", "9"],
+    inStock: true,
+    imageAlt: "White classic leather trainers, side view",
+  },
+  {
+    productId: "mock-008",
+    title: "Occasion Satin Blouse",
+    brand: "Marlowe & Co",
+    category: "top",
+    colour: "green",
+    price: 28,
+    currency: "GBP",
+    sizes: ["8", "10", "12", "14", "16"],
+    inStock: true,
+    imageAlt: "Green satin occasion blouse, flat lay",
+  },
+];
