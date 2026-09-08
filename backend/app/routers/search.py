@@ -107,7 +107,16 @@ def _apply_eligibility_and_diversity(
     )
 
     if parsed.colour is None:
-        preferred_colour = get_session_preferred_colour(conn, session_id)
+        try:
+            preferred_colour = get_session_preferred_colour(conn, session_id)
+        except Exception:  # noqa: BLE001 -- architecture §10 "Session feature service
+            # unavailable: use non-personalised ranking" — a DB hiccup on this optional signal
+            # must never take down a search request that otherwise succeeded.
+            logger.warning("Session preference lookup failed, skipping personalisation", exc_info=True)
+            conn.rollback()  # the failed query leaves the connection's transaction aborted;
+            # clear it so the still-to-come search_request logging insert on this same
+            # pooled connection isn't rejected too.
+            preferred_colour = None
         ranked_ids = apply_session_colour_boost(ranked_ids, docs_by_id, preferred_colour)
 
     return ranked_ids[:limit]

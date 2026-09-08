@@ -259,6 +259,25 @@ def test_search_falls_back_to_bm25_only_when_vector_search_unavailable(client, m
     assert len(body["results"]) > 0
 
 
+def test_search_falls_back_to_non_personalised_when_session_feature_lookup_fails(client, monkeypatch):
+    """Failure injection (architecture §10 'Session feature service unavailable: use
+    non-personalised ranking') — a broken session-preference lookup must degrade gracefully,
+    not take down an otherwise-successful search. Also exercises that the connection is left
+    usable afterwards (the search_request logging insert on the same pooled connection must
+    still succeed)."""
+    import app.routers.search as search_router
+
+    def _boom(conn, session_id):
+        raise RuntimeError("simulated session feature service outage")
+
+    monkeypatch.setattr(search_router, "get_session_preferred_colour", _boom)
+
+    client.cookies.clear()
+    resp = client.get("/search", params={"q": "dress"})
+    assert resp.status_code == 200
+    assert len(resp.json()["results"]) > 0
+
+
 def test_search_uses_hybrid_fusion_by_default(client):
     resp = client.get("/search", params={"q": "black nike shoes"})
     assert resp.status_code == 200
