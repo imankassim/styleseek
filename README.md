@@ -114,6 +114,8 @@ in [`docs/progress.md`](docs/progress.md).
 | [`docs/data_sheets/catalogue_data_sheet.md`](docs/data_sheets/catalogue_data_sheet.md) | Dataset provenance, licence, synthetic-field disclosure |
 | [`docs/ethics/README.md`](docs/ethics/README.md) | Privacy, bias/fairness, explainability, open ethical gaps |
 | [`docs/monitoring.md`](docs/monitoring.md) | Operational runbook, failure playbook, restore steps |
+| [`docs/cost.md`](docs/cost.md) | Storage usage, service tiers, what's £0 vs unmeasured |
+| [`docs/demonstration_script.md`](docs/demonstration_script.md) | A scripted stakeholder walkthrough — real commands, wins and known gaps both shown |
 | [`evaluation/relevance_rubric.md`](evaluation/relevance_rubric.md) | How queries were graded for the evaluation harness |
 
 ## Repository layout

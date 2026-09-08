@@ -58,8 +58,8 @@ line-by-line comparison, not just against the markdown mirror) at the user's req
 fixed one real bug in the process — see the connection-resilience commit
 (`backend/app/db.py`/`routers/search.py`, 2026-09-08). Everything in §2.1 ("what will be built"),
 §2.2 ("what will not"), the 16-stage plan, and the stage decision gates is delivered as
-documented elsewhere in this file. Smaller items checked and not yet acted on, so they don't
-silently look "done" by omission:
+documented elsewhere in this file. Smaller items found during the audit, all now fixed
+(2026-09-08) so they don't silently look "done" by omission before this note was added:
 
 - **§3.2 NFR "Cost"** — written up (2026-09-08), `docs/cost.md`: storage usage for both managed
   services (Postgres 68MB; OpenSearch ~547MB once the image vector index finishes, vector
@@ -84,9 +84,10 @@ silently look "done" by omission:
   anything. Explicitly labelled as current-state snapshots, not literal reconstructions of each
   historical `EXPnn` run (several used index states, e.g. pre-synonym-expansion, that no longer
   exist unchanged).
-- **§18 "Final held-out evaluation and demonstration script"** — the held-out evaluation exists
-  (`evaluation/final_evaluation.md`); no separate scripted stakeholder walkthrough exists beyond
-  the README's quick start.
+- **§18 "Final held-out evaluation and demonstration script"** — the demonstration script half
+  is now done too (2026-09-08), `docs/demonstration_script.md`: every command in it was actually
+  run against the live system while writing it, including the full personalisation click
+  sequence and both known-gap queries (typo, no-result) shown honestly rather than only wins.
 - **FR-06** ("The ranker can fall back to fusion...") — the semantic→lexical half is built and
   tested; the ranker→fusion half was never exercised because no learned ranker was ever promoted
   to serving (Stage 13, G8 said no) — there's nothing live to "fall back" from yet. Not a gap
