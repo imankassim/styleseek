@@ -1,4 +1,4 @@
-import type { CategorySummary, ProductDetail, ProductListResponse, ProductVariant } from "@/types/product";
+import type { CategorySummary, Product, ProductDetail, ProductListResponse, ProductVariant } from "@/types/product";
 import { apiGet, toProduct, type ApiProduct } from "@/lib/api-client";
 
 type ApiProductListResponse = {
@@ -91,4 +91,21 @@ type ApiCategoryListResponse = {
 export async function listCategories(): Promise<CategorySummary[]> {
   const data = await apiGet<ApiCategoryListResponse>("/categories");
   return data.categories.map((c) => ({ category: c.category, productCount: c.product_count }));
+}
+
+type ApiSimilarProductsResponse = {
+  product_id: string;
+  available: boolean;
+  results: ApiProduct[];
+};
+
+// Visual similarity (architecture §12 journey 16, optional extension — see
+// backend/app/visual_similarity.py). `available: false` is a normal, expected response (the
+// product has no catalogue image, or the index isn't ready yet) — not an error.
+export async function getSimilarProducts(productId: string, limit = 12): Promise<Product[]> {
+  const data = await apiGet<ApiSimilarProductsResponse>(
+    `/products/${encodeURIComponent(productId)}/similar`,
+    { limit }
+  );
+  return data.available ? data.results.map(toProduct) : [];
 }

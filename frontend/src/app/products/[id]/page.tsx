@@ -3,9 +3,10 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 
-import { getProduct } from "@/lib/products-api";
+import { getProduct, getSimilarProducts } from "@/lib/products-api";
 import { useBasket } from "@/lib/basket-context";
-import type { ProductDetail } from "@/types/product";
+import { ProductCard } from "@/components/ProductCard";
+import type { Product, ProductDetail } from "@/types/product";
 
 type State =
   | { status: "loading" }
@@ -24,6 +25,11 @@ function ProductDetailView({ id }: { id: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState(false);
+  // Similar products are a separate, optional, best-effort section (architecture §12 journey
+  // 16) — an empty array is the honest default for "not available yet" as well as "genuinely
+  // fetched, nothing found" and "the request failed"; none of those should affect the rest of
+  // the page.
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const { addItem } = useBasket();
 
   useEffect(() => {
@@ -45,6 +51,14 @@ function ProductDetailView({ id }: { id: string }) {
             message: error instanceof Error ? error.message : "Unknown error.",
           });
         }
+      });
+
+    getSimilarProducts(id)
+      .then((products) => {
+        if (!cancelled) setSimilarProducts(products);
+      })
+      .catch(() => {
+        // Best-effort — a failed similar-products lookup shouldn't affect the main product view.
       });
 
     return () => {
@@ -97,61 +111,76 @@ function ProductDetailView({ id }: { id: string }) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-12 md:flex-row">
-      <div
-        role="img"
-        aria-label={product.imageAlt}
-        className="flex aspect-[3/4] w-full items-center justify-center bg-neutral-100 text-sm text-neutral-400 md:w-1/2"
-      >
-        Image placeholder
-      </div>
-
-      <div className="flex flex-1 flex-col gap-3">
-        {product.brand && (
-          <p className="text-xs uppercase tracking-wide text-neutral-500">{product.brand}</p>
-        )}
-        <h1 className="text-2xl font-semibold text-neutral-900">{product.title}</h1>
-        <p className="text-lg text-neutral-800">£{product.price.toFixed(2)}</p>
-        <p className="text-sm text-neutral-600">
-          {product.category}
-          {product.occasion ? ` · ${product.occasion}` : ""}
-        </p>
-
-        <fieldset className="mt-4">
-          <legend className="mb-2 text-sm font-medium text-neutral-900">Size</legend>
-          <div className="flex flex-wrap gap-2">
-            {product.variants.map((variant) => (
-              <button
-                key={variant.variantId}
-                type="button"
-                disabled={variant.stockQuantity === 0}
-                aria-pressed={selectedSize === variant.size}
-                onClick={() => setSelectedSize(variant.size)}
-                className={`rounded-md border px-3 py-1.5 text-sm ${
-                  selectedSize === variant.size
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-300 bg-white text-neutral-900 hover:border-neutral-500"
-                } disabled:cursor-not-allowed disabled:opacity-40`}
-              >
-                {variant.size}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        <button
-          type="button"
-          onClick={handleAddToBasket}
-          disabled={!selectedVariant || selectedVariant.stockQuantity === 0}
-          className="mt-4 w-fit rounded-md bg-neutral-900 px-5 py-2.5 font-medium text-white hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-6 py-12">
+      <div className="flex w-full flex-col gap-8 md:flex-row">
+        <div
+          role="img"
+          aria-label={product.imageAlt}
+          className="flex aspect-[3/4] w-full items-center justify-center bg-neutral-100 text-sm text-neutral-400 md:w-1/2"
         >
-          {justAdded ? "Added ✓" : "Add to basket"}
-        </button>
+          Image placeholder
+        </div>
 
-        {!selectedVariant && (
-          <p className="text-xs text-red-700">This item is currently out of stock.</p>
-        )}
+        <div className="flex flex-1 flex-col gap-3">
+          {product.brand && (
+            <p className="text-xs uppercase tracking-wide text-neutral-500">{product.brand}</p>
+          )}
+          <h1 className="text-2xl font-semibold text-neutral-900">{product.title}</h1>
+          <p className="text-lg text-neutral-800">£{product.price.toFixed(2)}</p>
+          <p className="text-sm text-neutral-600">
+            {product.category}
+            {product.occasion ? ` · ${product.occasion}` : ""}
+          </p>
+
+          <fieldset className="mt-4">
+            <legend className="mb-2 text-sm font-medium text-neutral-900">Size</legend>
+            <div className="flex flex-wrap gap-2">
+              {product.variants.map((variant) => (
+                <button
+                  key={variant.variantId}
+                  type="button"
+                  disabled={variant.stockQuantity === 0}
+                  aria-pressed={selectedSize === variant.size}
+                  onClick={() => setSelectedSize(variant.size)}
+                  className={`rounded-md border px-3 py-1.5 text-sm ${
+                    selectedSize === variant.size
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-300 bg-white text-neutral-900 hover:border-neutral-500"
+                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                >
+                  {variant.size}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <button
+            type="button"
+            onClick={handleAddToBasket}
+            disabled={!selectedVariant || selectedVariant.stockQuantity === 0}
+            className="mt-4 w-fit rounded-md bg-neutral-900 px-5 py-2.5 font-medium text-white hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {justAdded ? "Added ✓" : "Add to basket"}
+          </button>
+
+          {!selectedVariant && (
+            <p className="text-xs text-red-700">This item is currently out of stock.</p>
+          )}
+        </div>
       </div>
+
+      {similarProducts.length > 0 && (
+        <section aria-labelledby="similar-styles-heading">
+          <h2 id="similar-styles-heading" className="mb-4 text-lg font-semibold text-neutral-900">
+            Similar styles
+          </h2>
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {similarProducts.map((similar) => (
+              <ProductCard key={similar.productId} product={similar} />
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }
