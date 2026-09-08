@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_cors_origins
 from app.db import close_pool, open_pool
 from app.routers import events, health, products, search
 from app.semantic import preload_model
@@ -18,12 +19,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="StyleSeek API", lifespan=lifespan)
 
-# Local dev only — Next.js dev server origin. Revisited when Stage 15 introduces real
-# deployment config instead of a hardcoded allowlist. allow_credentials is needed so the
-# anonymous session cookie (app/session.py) round-trips between the two localhost origins.
+# Defaults to the local Next.js dev server; set CORS_ORIGINS (comma-separated) in deployment
+# (Stage 15, see backend/Dockerfile) to the real deployed frontend origin instead.
+# allow_credentials is needed so the anonymous session cookie (app/session.py) round-trips.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],

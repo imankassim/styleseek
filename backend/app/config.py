@@ -48,3 +48,16 @@ def get_opensearch_url() -> str | None:
             return value
 
     return None
+
+
+DEFAULT_CORS_ORIGINS = ["http://localhost:3000"]
+
+
+def get_cors_origins() -> list[str]:
+    """Comma-separated CORS_ORIGINS env var (e.g. the deployed frontend's real origin);
+    defaults to the local Next.js dev server so `python backend/run.py` keeps working
+    unconfigured (architecture §15 containers/deployment — see app/main.py)."""
+    raw = os.environ.get("CORS_ORIGINS", "").strip()
+    if not raw:
+        return DEFAULT_CORS_ORIGINS
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
