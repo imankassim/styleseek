@@ -23,24 +23,28 @@ in Stage 4.
   (`styles.csv` + `images/*.jpg`, 44,446 rows, 44,441 with a matching image file — 5 rows have
   no image).
 
-## Licence — ⚠ action required before ingestion
+## Licence — confirmed (Stage 16)
 
-Kaggle lists a licence for this dataset on its page, which could not be confirmed
-programmatically (the page is JavaScript-rendered and not fetchable as plain text from this
-environment). **Before any product record or image derived from this dataset is used beyond
-local experimentation, or committed/shared in this repository, confirm the exact licence text
-shown on the Kaggle dataset page and paste it below.**
+**MIT.** Kaggle's dataset page renders its licence panel client-side via JavaScript, which
+earlier fetch attempts (both a plain `curl` and the agent's own web-fetch tool, which converts
+rendered pages to markdown) couldn't see — both returned only the page shell. Confirmed instead
+by fetching the raw page HTML with a standard browser User-Agent and reading the page's own
+`schema.org` `Dataset` JSON-LD block (a structured-data script tag search engines use, present
+in the raw HTML regardless of client-side rendering):
 
-> Licence text (paste from Kaggle "Usability"/"License" panel): `PENDING — confirm on Kaggle`
+```json
+"license": {"@type": "CreativeWork", "name": "MIT", "url": "https://www.mit.edu/~amini/LICENSE.md"}
+```
 
-Until confirmed:
+Same result on both the full and small dataset variants (one page's metadata references the
+other as an alternate size of the same dataset). MIT is broadly permissive — use, modification
+and redistribution are permitted, commercial use included. This resolves architecture §16's
+"unlicensed content" risk (`docs/risk_register.md`) for this dataset.
 
-- Raw dataset files (CSVs, images) are **not** committed to git — this repo only holds derived,
-  minimal fields needed for the prototype schema, and only once licence terms are confirmed to
-  permit that use.
-- No dataset imagery or text is used in any public-facing demo/deployment without that
-  confirmation.
-- This mirrors architecture §2.2 ("no unlicensed content") and §11 ("data provenance").
+This doesn't retroactively bless anything already done differently: raw dataset files (CSVs,
+images) still aren't committed to git — not a licence restriction, just standard practice for
+large binary data — and product records here remain a derived, minimal subset (architecture
+§2.2, §11).
 
 ## Confirmed structure
 
