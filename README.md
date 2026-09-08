@@ -2,8 +2,11 @@
 
 An original fashion e-commerce search **research prototype** used to answer:
 
-> To what extent does hybrid lexical and semantic retrieval, followed by learning-to-rank,
-> improve fashion-product search relevance compared with a tuned BM25 baseline?
+To what extent does hybrid lexical and semantic retrieval, followed by learning-to-rank,
+improve fashion-product search relevance compared with a tuned BM25 baseline?
+
+>or more simply,
+>can you make product search smarter, and can you actually prove it's smarter rather than just assuming it is?
 
 Built from a static page to a hybrid BM25 + vector search service with query
 understanding, safety filtering, and bounded personalisation — each stage measured against the
