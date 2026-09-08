@@ -81,6 +81,25 @@ docker compose up --build
 Postgres and OpenSearch are managed free-tier services in this project (Neon, Bonsai) rather
 than local installs — see `docs/risk_register.md`'s "complex local setup" entry for why.
 
+## Try it yourself
+
+Once both are running, open `http://localhost:3000` in a browser and search. A few queries that
+show off different parts of the system:
+
+- `black nike shoes` — exact brand/product match
+- `red dress under £50` — price shown as a hard constraint in the results
+- `smart casual blazer` — semantic match on occasion, not just keywords
+- `grren shrt` — a deliberate typo, to see a known, documented limitation rather than a hidden one
+- Open any product page for a "Similar styles" section (visual similarity, not text search)
+- Click into a couple of products of the same colour, then run a broad search like `dress` again
+  in the same browser tab — session personalisation nudges that colour toward the top, but never
+  overrides an explicit colour in a later search
+
+Every response also shows `model_version` and `fallback_used` in the browser's network tab
+(`GET /search`), so you can see exactly which retrieval path actually served it. For a longer,
+scripted walkthrough with real `curl` commands (including the API responses), see
+[`docs/demonstration_script.md`](docs/demonstration_script.md).
+
 ## Running the tests
 
 ```bash
