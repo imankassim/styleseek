@@ -151,6 +151,55 @@ def test_product_detail_not_found(client):
     assert resp.status_code == 404
 
 
+def test_similar_products_returns_visually_similar_items(client):
+    """Visual similarity (architecture §12 journey 16, optional extension) -- picks a real
+    product with a catalogue image and confirms the endpoint returns other real products,
+    never the source product itself."""
+    list_resp = client.get("/products", params={"limit": 1})
+    product_id = list_resp.json()["results"][0]["product_id"]
+
+    resp = client.get(f"/products/{product_id}/similar")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["product_id"] == product_id
+    if body["available"]:
+        assert len(body["results"]) > 0
+        assert all(r["product_id"] != product_id for r in body["results"])
+
+
+def test_similar_products_respects_limit(client):
+    list_resp = client.get("/products", params={"limit": 1})
+    product_id = list_resp.json()["results"][0]["product_id"]
+
+    resp = client.get(f"/products/{product_id}/similar", params={"limit": 3})
+    assert resp.status_code == 200
+    body = resp.json()
+    if body["available"]:
+        assert len(body["results"]) <= 3
+
+
+def test_similar_products_not_found_for_nonexistent_product(client):
+    resp = client.get("/products/does-not-exist-xyz/similar")
+    assert resp.status_code == 404
+
+
+def test_similar_products_unavailable_gracefully_when_index_unavailable(client, monkeypatch):
+    """Failure injection, same honest-degradation pattern as the OpenSearch/vector fallbacks in
+    /search -- a missing visual similarity index must not 500, just report unavailable."""
+    import app.routers.products as products_router
+
+    monkeypatch.setattr(products_router.opensearch, "get_client", lambda: None)
+
+    list_resp = client.get("/products", params={"limit": 1})
+    product_id = list_resp.json()["results"][0]["product_id"]
+
+    resp = client.get(f"/products/{product_id}/similar")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["available"] is False
+    assert body["results"] == []
+
+
 def test_search_sets_session_cookie(client):
     # Clear the shared client's jar rather than opening a second TestClient — the connection
     # pool is a module-level singleton in app.db, and a second `with TestClient(app)` would

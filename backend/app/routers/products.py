@@ -1,8 +1,9 @@
-"""GET /products, GET /products/{product_id}, GET /categories."""
+"""GET /products, GET /products/{product_id}, GET /categories, GET /products/{product_id}/similar."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg import Connection
 
+from app import opensearch
 from app.db import get_connection
 from app.schemas import (
     CategoryListResponse,
@@ -11,7 +12,9 @@ from app.schemas import (
     ProductListResponse,
     ProductResult,
     ProductVariant,
+    SimilarProductsResponse,
 )
+from app.visual_similarity import find_similar_products
 
 router = APIRouter()
 
@@ -114,6 +117,72 @@ def list_categories(conn: Connection = Depends(get_connection)) -> CategoryListR
     return CategoryListResponse(
         categories=[CategorySummary(category=row[0], product_count=row[1]) for row in rows]
     )
+
+
+def _products_by_id(conn: Connection, product_ids: list[str]) -> dict[str, ProductResult]:
+    if not product_ids:
+        return {}
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            WITH product_colour AS (
+                SELECT DISTINCT ON (product_id) product_id, colour
+                FROM product_variant
+                ORDER BY product_id, colour
+            )
+            SELECT
+                p.product_id, p.title, p.brand, p.category, p.price, p.image_filename,
+                pc.colour,
+                array_agg(DISTINCT v.size) AS sizes,
+                bool_or(v.stock_quantity > 0) AS in_stock
+            FROM product p
+            JOIN product_colour pc ON pc.product_id = p.product_id
+            JOIN product_variant v ON v.product_id = p.product_id
+            WHERE p.product_id = ANY(%s)
+            GROUP BY p.product_id, p.title, p.brand, p.category, p.price, p.image_filename, pc.colour
+            """,
+            (product_ids,),
+        )
+        rows = cur.fetchall()
+
+    return {
+        row[0]: ProductResult(
+            product_id=row[0],
+            title=row[1],
+            brand=row[2],
+            category=row[3],
+            price=float(row[4]),
+            image_filename=row[5],
+            colour=row[6],
+            sizes=sorted(row[7]) if row[7] else [],
+            in_stock=bool(row[8]),
+        )
+        for row in rows
+    }
+
+
+@router.get("/products/{product_id}/similar", response_model=SimilarProductsResponse)
+def get_similar_products(
+    product_id: str,
+    limit: int = Query(default=12, ge=1, le=50),
+    conn: Connection = Depends(get_connection),
+) -> SimilarProductsResponse:
+    with conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM product WHERE product_id = %s", (product_id,))
+        if cur.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+    client = opensearch.get_client()
+    if client is None:
+        return SimilarProductsResponse(product_id=product_id, available=False, results=[])
+
+    similar_ids = find_similar_products(client, product_id, limit)
+    if similar_ids is None:
+        return SimilarProductsResponse(product_id=product_id, available=False, results=[])
+
+    products_by_id = _products_by_id(conn, similar_ids)
+    results = [products_by_id[pid] for pid in similar_ids if pid in products_by_id]
+    return SimilarProductsResponse(product_id=product_id, available=True, results=results)
 
 
 @router.get("/products/{product_id}", response_model=ProductDetail)

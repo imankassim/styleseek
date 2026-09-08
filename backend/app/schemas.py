@@ -62,6 +62,12 @@ class ProductListResponse(BaseModel):
     results: list[ProductResult]
 
 
+class SimilarProductsResponse(BaseModel):
+    product_id: str
+    available: bool
+    results: list[ProductResult]
+
+
 class CategorySummary(BaseModel):
     category: str
     product_count: int
