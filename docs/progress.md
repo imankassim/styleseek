@@ -45,8 +45,11 @@ after Stage 16 concluded.
   against the NDCG harness — see `docs/model_cards/visual_similarity_v1.md` for the honest
   finding (colour/background-dominated for flat garment photos, reliably within-category for
   structured objects like shoes/watches). 151/151 tests pass.
-- **Conversational discovery** — not started. Would need an LLM API (cost/credentials the user
-  would need to provide), unlike visual similarity which ran entirely on local compute.
+- **Conversational discovery** / EXP20 (optional LLM query parser) — not pursued, by explicit
+  user decision (2026-09-08). Unlike visual similarity, this needs a paid third-party LLM API
+  and credentials rather than local compute alone; the deterministic parser (Stage 9) already
+  meets the architecture's "safe structured constraints" exit outcome. A scope boundary, not an
+  oversight — see `experiments/experiment_register.md`'s EXP20 row.
 
 ## Notes / open items carried forward
 
