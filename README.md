@@ -7,10 +7,37 @@ An original fashion e-commerce search **research prototype** used to answer:
 
 Built from a static page to a hybrid BM25 + vector search service with query
 understanding, safety filtering, and bounded personalisation — each stage measured against the
-one before it, with rejected approaches kept and documented rather than deleted. See
-[`docs/project_charter.md`](docs/project_charter.md) for the full research question and scope,
-and [`docs/architecture/STYLESEEK_ARCHITECTURE.md`](docs/architecture/STYLESEEK_ARCHITECTURE.md)
-for the governing architecture this was built against.
+one before it, with rejected approaches kept and documented rather than deleted.
+
+**Scope.** In scope: a responsive storefront, a real product catalogue (products, variants,
+prices, stock), hybrid lexical+semantic retrieval, transparent eligibility rules, learning-to-
+rank (attempted, not promoted — see Results below), and bounded anonymous session
+personalisation. Deliberately out of scope: real payments/fulfilment, any retailer's branding or
+proprietary assets, a production-scale identity platform, unrestricted LLM control of ranking,
+and any model promoted without enough genuine interaction data to justify it.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Shopper([Shopper]) -->|search, browse, filter| Frontend[Next.js frontend]
+    Frontend -->|GET /search, /products<br/>POST /events| API[FastAPI backend]
+    API --> QU[Query understanding<br/>colour, gender, price, size]
+    QU --> BM25[BM25 lexical retrieval]
+    QU --> Vector[Vector semantic retrieval]
+    BM25 --> Fusion[Weighted fusion 90/10]
+    Vector --> Fusion
+    Fusion --> Elig[Eligibility, dedup,<br/>bounded personalisation]
+    Elig --> Frontend
+    API --> PG[(PostgreSQL<br/>source of truth)]
+    PG -.->|rebuild index| OS[(OpenSearch<br/>lexical + vector index)]
+    OS --> BM25
+    OS --> Vector
+```
+
+Full component-by-component detail (data model, offline training path, deployment roles,
+failure/fallback behaviour) is in
+[`docs/architecture/STYLESEEK_ARCHITECTURE.md`](docs/architecture/STYLESEEK_ARCHITECTURE.md).
 
 ## What's actually here
 
@@ -90,7 +117,7 @@ simpler baseline — not enough training data yet), parallel retrieval via a thr
 
 Baseline first, measure before promoting, keep negative results, hard constraints before soft
 preference — see [`docs/architecture/STYLESEEK_ARCHITECTURE.md`](docs/architecture/STYLESEEK_ARCHITECTURE.md#4-architecture-principles)
-
+for the full methodology this followed.
 
 ## Documentation map
 
@@ -98,7 +125,6 @@ preference — see [`docs/architecture/STYLESEEK_ARCHITECTURE.md`](docs/architec
 |---|---|
 | [`docs/architecture/STYLESEEK_ARCHITECTURE.md`](docs/architecture/STYLESEEK_ARCHITECTURE.md) | The governing architecture (mirrors the original `STYLESEE1.docx`) |
 | [`docs/project_charter.md`](docs/project_charter.md) | Research question, scope, intended outcomes |
-| [`docs/progress.md`](docs/progress.md) | Stage-by-stage record of what shipped and what gate it cleared |
 | [`experiments/experiment_register.md`](experiments/experiment_register.md) | Every experiment run, accepted or rejected, with numbers |
 | [`docs/risk_register.md`](docs/risk_register.md) | Every risk/assumption, resolved or still open, with evidence |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records (ADRs) |
@@ -119,12 +145,12 @@ frontend/        Next.js app
 backend/         FastAPI app
 database/        schema migrations, ingestion
 search/          OpenSearch indexing, BM25, vectors, fusion
-ml/              learning-to-rank features (retained, not live — see Stage 13/G8)
+ml/              learning-to-rank features (retained, not live — see experiment register)
 experiments/     every experiment, accepted or rejected, reproducible
 evaluation/      relevance judgments, metrics harness, final evaluation
 tests/           unit, integration, data_quality, search_regression, sync, drift, accessibility
 monitoring/      operational report against live search_request data
-docs/            architecture, decisions, model cards, data sheets, ethics, progress, risk
+docs/            architecture, decisions, model cards, data sheets, ethics, risk
 ```
 
 ## Licence and provenance
