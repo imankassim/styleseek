@@ -31,6 +31,23 @@ progress from git log alone.
   dropped. See `tests/unit/test_personalization.py` (pure-function boost logic) and the three G9
   tests in `tests/integration/test_api_contract.py` (live-API override/cold-start checks).
 
+## Optional extensions (after Stage 16)
+
+The §20 plan above is frozen (ADR-3) and complete. Architecture §12 journey 16 names "visual
+similarity and conversational discovery" as explicitly separate, optional extensions — not part
+of any gated stage, not in the §14 experiment catalogue. Continuing here at the user's direction
+after Stage 16 concluded.
+
+- **Visual similarity** — Done. `GET /products/{id}/similar`, CLIP image embeddings
+  (`Qdrant/clip-ViT-B-32-vision` via fastembed), one kNN lookup against an offline-built index
+  (`search/index_image_vectors.py`), surfaced as a "Similar styles" section on the product
+  detail page. No ground truth exists for this, so it's evaluated qualitatively rather than
+  against the NDCG harness — see `docs/model_cards/visual_similarity_v1.md` for the honest
+  finding (colour/background-dominated for flat garment photos, reliably within-category for
+  structured objects like shoes/watches). 151/151 tests pass.
+- **Conversational discovery** — not started. Would need an LLM API (cost/credentials the user
+  would need to provide), unlike visual similarity which ran entirely on local compute.
+
 ## Notes / open items carried forward
 
 - Catalogue licence still not confirmed on the Kaggle dataset page — see

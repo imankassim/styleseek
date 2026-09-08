@@ -29,6 +29,11 @@ for the governing architecture this was built against.
   underperformed the hand-tuned fusion baseline on the data available — see
   [`evaluation/final_evaluation.md`](evaluation/final_evaluation.md#negative-results-carried-into-this-conclusion).
   That's a finding, not a gap that was skipped.
+- **Visual similarity** ("Similar styles" on the product page) — CLIP image embeddings, a
+  genuinely optional extension beyond the frozen core plan. See
+  [`docs/model_cards/visual_similarity_v1.md`](docs/model_cards/visual_similarity_v1.md) for what
+  it does well (structured objects like shoes/watches) versus its honest limitation
+  (colour/background-dominated matching for flat garment photos).
 
 ## Quick start
 
@@ -105,6 +110,7 @@ in [`docs/progress.md`](docs/progress.md).
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records (ADRs) |
 | [`evaluation/final_evaluation.md`](evaluation/final_evaluation.md) | The held-out result and full negative-results account |
 | [`docs/model_cards/hybrid_search_v1.md`](docs/model_cards/hybrid_search_v1.md) | The live serving configuration, its data, evaluation, and limitations |
+| [`docs/model_cards/visual_similarity_v1.md`](docs/model_cards/visual_similarity_v1.md) | The optional "Similar styles" extension — CLIP image embeddings, qualitative evaluation |
 | [`docs/data_sheets/catalogue_data_sheet.md`](docs/data_sheets/catalogue_data_sheet.md) | Dataset provenance, licence, synthetic-field disclosure |
 | [`docs/ethics/README.md`](docs/ethics/README.md) | Privacy, bias/fairness, explainability, open ethical gaps |
 | [`docs/monitoring.md`](docs/monitoring.md) | Operational runbook, failure playbook, restore steps |
