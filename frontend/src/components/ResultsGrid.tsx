@@ -78,10 +78,7 @@ export function ResultsGrid({
   return (
     <div aria-live="polite" className="w-full max-w-5xl">
       {state.status === "idle" && (
-        <p className="text-neutral-600">
-          Search for products above — try &ldquo;black adidas trainers&rdquo; or &ldquo;green
-          wedding guest dress&rdquo;.
-        </p>
+        <p className="text-center text-neutral-500">Results will appear here once you search.</p>
       )}
 
       {state.status === "loading" && (

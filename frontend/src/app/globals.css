@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Deliberate, brand-consistent light theme — most fashion retailers (COS, Everlane, Uniqlo,
+   ASOS) don't auto-switch with the visitor's OS dark-mode setting, they keep one considered
+   palette. Previously this flipped to a near-black background on a dark-mode system while every
+   component kept its light-theme text/border colours, making the whole site read as broken and
+   "mostly black" rather than a deliberate design. */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +17,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }

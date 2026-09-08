@@ -45,9 +45,9 @@ export default function BrowsePage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12">
-      <h1 className="text-2xl font-semibold text-neutral-900">Browse</h1>
+      <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">Browse</h1>
 
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-5 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
         <div>
           <label htmlFor="category" className="mb-1 block text-xs font-medium text-neutral-700">
             Category
@@ -59,7 +59,7 @@ export default function BrowsePage() {
               setCategory(e.target.value);
               resetToFirstPage();
             }}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:border-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
           >
             <option value="">All categories</option>
             {categories.map((c) => (
@@ -83,7 +83,7 @@ export default function BrowsePage() {
               setMinPrice(e.target.value);
               resetToFirstPage();
             }}
-            className="w-24 rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+            className="w-24 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:border-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
           />
         </div>
 
@@ -100,7 +100,7 @@ export default function BrowsePage() {
               setMaxPrice(e.target.value);
               resetToFirstPage();
             }}
-            className="w-24 rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+            className="w-24 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:border-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
           />
         </div>
 
@@ -115,7 +115,7 @@ export default function BrowsePage() {
               setSort(e.target.value as ListProductsParams["sort"]);
               resetToFirstPage();
             }}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:border-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
           >
             <option value="relevance">Default</option>
             <option value="price_asc">Price: low to high</option>
@@ -131,6 +131,7 @@ export default function BrowsePage() {
               setInStockOnly(e.target.checked);
               resetToFirstPage();
             }}
+            className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
           />
           In stock only
         </label>
@@ -201,7 +202,7 @@ function BrowseResults({
         ))}
       </ul>
 
-      <div className="flex items-center justify-between text-sm text-neutral-600">
+      <div className="flex items-center justify-between border-t border-neutral-200 pt-4 text-sm text-neutral-600">
         <span>
           {offset + 1}–{Math.min(offset + PAGE_SIZE, state.total)} of {state.total}
         </span>
@@ -210,7 +211,7 @@ function BrowseResults({
             type="button"
             disabled={offset === 0}
             onClick={() => onOffsetChange(Math.max(0, offset - PAGE_SIZE))}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-neutral-300 px-3 py-1.5 font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-300 disabled:hover:text-neutral-700"
           >
             Previous
           </button>
@@ -218,7 +219,7 @@ function BrowseResults({
             type="button"
             disabled={offset + PAGE_SIZE >= state.total}
             onClick={() => onOffsetChange(offset + PAGE_SIZE)}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-neutral-300 px-3 py-1.5 font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-300 disabled:hover:text-neutral-700"
           >
             Next
           </button>

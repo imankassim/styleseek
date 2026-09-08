@@ -27,23 +27,53 @@ export default function HomePage() {
       );
   }, []);
 
+  const exampleQueries = ["black nike shoes", "red dress under £50", "smart casual blazer"];
+
+  function runExample(example: string) {
+    setQuery(example);
+    runSearch(example);
+  }
+
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center gap-8 px-6 py-12">
-      <header className="flex w-full max-w-2xl flex-col items-center gap-2 text-center">
-        <h1 className="text-3xl font-semibold text-neutral-900">StyleSeek</h1>
-        <p className="text-neutral-600">
-          An original fashion search prototype — search below to see it in action.
-        </p>
-      </header>
+    <main className="flex flex-1 flex-col">
+      <section className="border-b border-neutral-200 bg-neutral-50">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-6 py-16 text-center">
+          <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 sm:text-5xl">
+            Find your style
+          </h1>
+          <p className="max-w-md text-neutral-600">
+            An original fashion search prototype — hybrid lexical and semantic search, described
+            fully in the write-up below.
+          </p>
 
-      <SearchBar
-        value={query}
-        onChange={setQuery}
-        onSubmit={runSearch}
-        isLoading={state.status === "loading"}
-      />
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSubmit={runSearch}
+            isLoading={state.status === "loading"}
+          />
 
-      <ResultsGrid state={state} onRetry={() => runSearch(query)} />
+          {state.status === "idle" && (
+            <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+              <span className="text-neutral-500">Try:</span>
+              {exampleQueries.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => runExample(example)}
+                  className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center px-6 py-12">
+        <ResultsGrid state={state} onRetry={() => runSearch(query)} />
+      </div>
     </main>
   );
 }

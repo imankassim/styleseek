@@ -111,8 +111,15 @@ function ProductDetailView({ id }: { id: string }) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-6 py-12">
-      <div className="flex w-full flex-col gap-8 md:flex-row">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-6 py-12">
+      <Link
+        href="/browse"
+        className="-mb-4 flex items-center gap-1 text-sm text-neutral-500 transition-colors hover:text-neutral-900"
+      >
+        ← Back to browse
+      </Link>
+
+      <div className="flex w-full flex-col gap-10 md:flex-row">
         <div
           role="img"
           aria-label={product.imageAlt}
@@ -125,14 +132,14 @@ function ProductDetailView({ id }: { id: string }) {
           {product.brand && (
             <p className="text-xs uppercase tracking-wide text-neutral-500">{product.brand}</p>
           )}
-          <h1 className="text-2xl font-semibold text-neutral-900">{product.title}</h1>
-          <p className="text-lg text-neutral-800">£{product.price.toFixed(2)}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">{product.title}</h1>
+          <p className="text-xl font-semibold text-neutral-900">£{product.price.toFixed(2)}</p>
           <p className="text-sm text-neutral-600">
             {product.category}
             {product.occasion ? ` · ${product.occasion}` : ""}
           </p>
 
-          <fieldset className="mt-4">
+          <fieldset className="mt-4 border-t border-neutral-200 pt-4">
             <legend className="mb-2 text-sm font-medium text-neutral-900">Size</legend>
             <div className="flex flex-wrap gap-2">
               {product.variants.map((variant) => (
