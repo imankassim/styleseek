@@ -53,3 +53,11 @@ Chronological one-line entries as experiments start/finish, newest last.
   products across two pooling passes after repeated cases of genuinely good but ungraded
   results scoring as irrelevant by default — see the experiment READMEs and
   `evaluation/relevance_rubric.md`.
+- 2026-09-08 — Stage 14 (bounded context, G9) shipped as direct engineering work rather than an
+  EXP-numbered comparison — same treatment as Stage 12's eligibility/dedup work, since there's no
+  relevance-judgment ground truth for "does this reflect a shopper's session preference," only
+  the structural guarantees the gate actually asks for (never overrides explicit intent, reliable
+  cold start). See `backend/app/personalization.py` and `docs/progress.md` Stage 14 row. EXP50
+  (collaborative filtering) and EXP51 (two-tower) remain deliberately "Not started": both need
+  more genuine interaction volume than this project has, per the Stage 13 finding they'd hit the
+  same wall EXP40/41/43 did.

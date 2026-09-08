@@ -20,9 +20,16 @@ progress from git log alone.
 | 11 | Build hybrid retrieval | Done | G7 met — EXP34 (90/10 weighted BM25+vector fusion) beats BM25 alone on ndcg@10 (+1.3%) and recall@50 (+4.0%) simultaneously, sub-second latency (~650ms). Live `/search` model version `hybrid_weighted_fusion_v1`, two-tier fallback. 95/95 tests pass |
 | 12 | Guarantee safety | Done | Size extraction added to query understanding; stock/size eligibility (unconditional `in_stock` filter, per-size stock confirmed against Postgres) and post-fusion duplicate control ((title, category, colour) dedup) wired into live `/search`. 110/110 tests pass |
 | 13 | Train learned ranking | Done | G8 result: **no** — EXP40/41/43 (linear, trees, LightGBM LambdaRank) all scored well below EXP34's hybrid fusion (0.703) on held-out validation, consistently (0.253/0.188/0.252). 178 training rows isn't enough data yet. EXP34 remains the live ranker; feature pipeline kept ready. 120/120 tests pass |
-| 14 | Add bounded context | Not started | G9 |
+| 14 | Add bounded context | Done | G9 met — session colour boost (`backend/app/personalization.py`) reorders only the top-10 window, only when the query itself has no explicit colour, using only that session's own real clicks (2+ needed for a signal). Confirmed live: repeated clicks on a Black dress bubble Black items to the front of a broad "dress" search, while an explicit "blue dress" search stays 100% blue regardless of click history. 130/130 tests pass |
 | 15 | Operationalise | Not started | G10 |
 | 16 | Conclude | Not started | G11 |
+
+- Stage 14 added `backend/app/personalization.py` (bounded session colour boost) and wired it
+  into `/search` as the last eligibility/diversity step. It never fires when the query has an
+  explicit colour, never fires for a cold-start session (no click history yet), and only ever
+  reorders the top-10 window of already-retrieved candidates — no new candidates pulled in, none
+  dropped. See `tests/unit/test_personalization.py` (pure-function boost logic) and the three G9
+  tests in `tests/integration/test_api_contract.py` (live-API override/cold-start checks).
 
 ## Notes / open items carried forward
 
