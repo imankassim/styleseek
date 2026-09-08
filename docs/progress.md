@@ -77,10 +77,13 @@ silently look "done" by omission:
   Whether every product is reachable by *some* query eventually (long-tail reachability) is a
   larger question this doesn't answer, stated plainly in the script's own output rather than
   implied by a bare percentage.
-- **§18 "Evaluation harness and saved result lists"** — the harness exists and is used throughout
-  (`evaluation/metrics.py`); the *lists* (raw per-query ranked product IDs) were never saved as
-  files, only summarised as metrics in each experiment's README/register entry. Reproducible by
-  re-running, not currently inspectable without doing so.
+- **§18 "Evaluation harness and saved result lists"** — fixed (2026-09-08),
+  `evaluation/save_results.py` + `evaluation/results/`. Saves full ranked product-id lists (not
+  just aggregate metrics) for all 18 labelled queries, for the live hybrid system and the BM25-
+  only/vector-only comparison paths, as dated JSON snapshots — inspectable without re-running
+  anything. Explicitly labelled as current-state snapshots, not literal reconstructions of each
+  historical `EXPnn` run (several used index states, e.g. pre-synonym-expansion, that no longer
+  exist unchanged).
 - **§18 "Final held-out evaluation and demonstration script"** — the held-out evaluation exists
   (`evaluation/final_evaluation.md`); no separate scripted stakeholder walkthrough exists beyond
   the README's quick start.
