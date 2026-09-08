@@ -33,6 +33,7 @@ from app import opensearch, semantic
 from app.db import get_connection
 from app.eligibility import deduplicate, products_with_size_in_stock
 from app.fusion import weighted_score_fusion
+from app.personalization import apply_session_colour_boost, get_session_preferred_colour
 from app.query_understanding import ParsedQuery, parse_query
 from app.schemas import ProductResult, QueryInterpretation, SearchResponse
 from app.session import get_session_id
@@ -68,19 +69,29 @@ def _score_expr(num_tokens: int) -> str:
 
 
 def _apply_eligibility_and_diversity(
-    conn: Connection, ranked_ids: list[str], docs_by_id: dict, parsed: ParsedQuery, limit: int
+    conn: Connection,
+    ranked_ids: list[str],
+    docs_by_id: dict,
+    parsed: ParsedQuery,
+    session_id: str,
+    limit: int,
 ) -> list[str]:
-    """Stage 12: the index-level filters (colour/gender/price/size-offered/in_stock, all in
-    app/opensearch.py) already did most of the eligibility work before this point — this
-    handles the two things that need the live database or the full candidate list.
+    """Architecture's logical pipeline step 6, "ELIGIBILITY AND DIVERSITY: stock, size,
+    category, price, duplicate control, bounded personalisation" — grouped together there, so
+    grouped together here. The index-level filters (colour/gender/price/size-offered/in_stock,
+    app/opensearch.py) already did most of the eligibility work before this point.
 
     1. If a specific size was requested, confirm it's actually in stock *right now* (the index
        only knows a product has *ever* offered that size, not current stock — see
        app/opensearch.py's build_filters).
     2. Duplicate control: collapse near-identical results (same title/category/colour — the
        catalogue genuinely has many, e.g. several identical-looking "Nike Men Black Shoes"
-       entries, different product_ids) down to one representative each, per architecture's
-       logical pipeline step 6.
+       entries, different product_ids) down to one representative each.
+    3. Bounded session personalisation (Stage 14) — only when the query itself didn't already
+       specify a colour (architecture "hard constraints before soft preference"; an explicit
+       colour is already a hard filter, so every remaining result already matches it — session
+       history must never second-guess a stated preference, only fill in when the query is
+       silent about it).
     """
     if parsed.size:
         in_stock_ids = products_with_size_in_stock(conn, ranked_ids, parsed.size)
@@ -94,11 +105,16 @@ def _apply_eligibility_and_diversity(
             tuple(sorted(docs_by_id[pid].get("colours") or [])),
         ),
     )
+
+    if parsed.colour is None:
+        preferred_colour = get_session_preferred_colour(conn, session_id)
+        ranked_ids = apply_session_colour_boost(ranked_ids, docs_by_id, preferred_colour)
+
     return ranked_ids[:limit]
 
 
 def _search_hybrid(
-    conn: Connection, query: str, limit: int, parsed: ParsedQuery
+    conn: Connection, query: str, limit: int, parsed: ParsedQuery, session_id: str
 ) -> tuple[list[ProductResult], str, bool] | None:
     """Returns (results, model_version, fallback_used), or None if OpenSearch itself is
     unavailable (both BM25 and vector depend on it) — the caller falls back to Postgres."""
@@ -132,14 +148,18 @@ def _search_hybrid(
 
     if not vector_docs:
         ranked_ids = [doc["product_id"] for doc in bm25_docs]
-        ranked_ids = _apply_eligibility_and_diversity(conn, ranked_ids, docs_by_id, parsed, limit)
+        ranked_ids = _apply_eligibility_and_diversity(
+            conn, ranked_ids, docs_by_id, parsed, session_id, limit
+        )
         results = [_to_product_result(docs_by_id[pid]) for pid in ranked_ids]
         return results, BM25_ONLY_MODEL_VERSION, True
 
     lexical_scores = {doc["product_id"]: doc["_bm25_score"] for doc in bm25_docs}
     semantic_scores = {doc["product_id"]: doc["_vector_score"] for doc in vector_docs}
     ranked_ids = weighted_score_fusion(lexical_scores, semantic_scores)
-    ranked_ids = _apply_eligibility_and_diversity(conn, ranked_ids, docs_by_id, parsed, limit)
+    ranked_ids = _apply_eligibility_and_diversity(
+        conn, ranked_ids, docs_by_id, parsed, session_id, limit
+    )
     results = [_to_product_result(docs_by_id[pid]) for pid in ranked_ids]
     return results, HYBRID_MODEL_VERSION, False
 
@@ -297,7 +317,7 @@ def search(
                 size=parsed.size,
             )
 
-        hybrid_result = _search_hybrid(conn, query, RESULT_LIMIT, parsed)
+        hybrid_result = _search_hybrid(conn, query, RESULT_LIMIT, parsed, session_id)
         if hybrid_result is not None:
             results, model_version, fallback_used = hybrid_result
         else:
