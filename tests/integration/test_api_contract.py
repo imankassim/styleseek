@@ -266,3 +266,62 @@ def test_search_uses_hybrid_fusion_by_default(client):
     assert body["model_version"] == "hybrid_weighted_fusion_v1"
     assert body["fallback_used"] is False
     assert len(body["results"]) > 0
+
+
+def test_search_explicit_colour_ignores_session_click_history(client):
+    """G9 gate ('does context add value without overriding intent?'): even a session that has
+    just clicked repeatedly on Black items must not leak into a query that already states its
+    own colour — the hard colour filter (Stage 9) is untouched by personalisation (Stage 14),
+    since app/routers/search.py only calls the boost when parsed.colour is None."""
+    client.cookies.clear()
+    black_resp = client.get("/search", params={"q": "black dress"})
+    search_request_id = black_resp.json()["search_request_id"]
+    black_product_id = black_resp.json()["results"][0]["product_id"]
+
+    for _ in range(2):
+        events_resp = client.post(
+            "/events",
+            json={
+                "events": [
+                    {
+                        "event_type": "click",
+                        "search_request_id": search_request_id,
+                        "product_id": black_product_id,
+                        "position": 0,
+                    }
+                ]
+            },
+        )
+        assert events_resp.status_code == 200
+
+    resp = client.get("/search", params={"q": "blue dress"})
+    assert resp.status_code == 200
+    results = resp.json()["results"]
+    assert len(results) > 0
+    assert all(r["colour"] == "Blue" for r in results)
+
+
+def test_search_cold_start_session_has_no_personalisation_error(client):
+    """A brand-new session (zero rows in `event` for its session_id) must not error out of
+    get_session_preferred_colour's SQL — cold start is the common case, not an edge case."""
+    client.cookies.clear()
+    resp = client.get("/search", params={"q": "dress"})
+    assert resp.status_code == 200
+    assert len(resp.json()["results"]) > 0
+
+
+def test_search_personalisation_boosts_session_preferred_colour(client, monkeypatch):
+    """With a forced session colour preference and a colour-free query, every matching-colour
+    product within the boost window must precede every non-matching one — the structural
+    invariant apply_session_colour_boost guarantees (tests/unit/test_personalization.py covers
+    the pure function directly; this checks it's actually wired into the live response)."""
+    import app.routers.search as search_router
+
+    monkeypatch.setattr(search_router, "get_session_preferred_colour", lambda conn, session_id: "Black")
+
+    client.cookies.clear()
+    resp = client.get("/search", params={"q": "dress"})
+    assert resp.status_code == 200
+    window = resp.json()["results"][:10]
+    is_match = [r["colour"] == "Black" for r in window]
+    assert is_match == sorted(is_match, reverse=True)
