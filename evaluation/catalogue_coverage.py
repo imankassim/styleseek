@@ -1,6 +1,6 @@
 """Catalogue coverage and diversity for broad queries (architecture §3.3 evaluation measure --
 never previously measured as its own metric, found missing during the 2026-09-08 brief-
-fulfilment audit; see docs/progress.md).
+fulfilment audit).
 
 Distinct from evaluation/metrics.py's NDCG/Recall: those need relevance judgments and answer
 "is the ranking good for a specific labelled query." This needs no judgments and answers a

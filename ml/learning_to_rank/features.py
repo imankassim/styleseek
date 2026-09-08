@@ -1,9 +1,10 @@
 """Feature generation for Stage 13 (learning-to-rank). Versioned (FEATURE_VERSION) and shared
 between offline training (this module, used by EXP40/41/43/44) and — if a model is ever
 promoted — live serving, per architecture §9 training controls: "Version feature generation and
-use the same logic in training and serving." No model here is promoted in this stage (see
-Stage 13 README in docs/progress.md for why), so this module isn't imported by backend/ yet —
-kept ready for if/when there's enough data to justify it.
+use the same logic in training and serving." No model here is promoted (see
+`experiments/experiment_register.md`'s EXP40/41/43 rows for why — all three underperformed the
+simpler fusion baseline on the available training data), so this module isn't imported by
+backend/ yet — kept ready for if/when there's enough data to justify it.
 
 Features are deliberately simple and inspectable (architecture §11 explainability): raw
 retrieval scores from the two methods already in production (BM25, vector), a handful of

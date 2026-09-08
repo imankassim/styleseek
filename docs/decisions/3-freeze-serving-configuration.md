@@ -50,4 +50,4 @@ tuning, weight changes, or query-understanding changes are made against evidence
 ## Evidence
 
 `grep -rn "splits=\[" experiments/` (2026-09-08) confirms no experiment ever evaluated against
-the `test` split; `docs/progress.md` Stages 8-15; `evaluation/final_evaluation.md`.
+the `test` split; `experiments/experiment_register.md`; `evaluation/final_evaluation.md`.

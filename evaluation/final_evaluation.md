@@ -51,7 +51,7 @@ with TestClient(app) as client:
   not handle typos at all. rj16 scoring 0 here is that same, already-documented limitation
   showing up in the held-out set — not a surprise this evaluation exists to reveal.
 - **Compare against the larger, but not fully held-out, historical numbers with that caveat in
-  mind.** The headline numbers quoted throughout `docs/progress.md` and
+  mind.** The headline numbers quoted throughout
   `experiments/experiment_register.md` (EXP14 BM25 ndcg@10 0.755; EXP34 hybrid fusion ndcg@10
   0.765, recall@50 0.721) were measured on `train`+`val` (n=15), which is what was actually used
   to *choose* between configurations — appropriate for that purpose, but every one of those

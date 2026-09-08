@@ -1,6 +1,6 @@
 """Saves raw per-query ranked result lists to disk (architecture §18 minimum artefact set:
 "evaluation harness and saved result lists" -- found missing during the 2026-09-08 brief-
-fulfilment audit, see docs/progress.md). evaluation/metrics.py's evaluate() computes ndcg/recall
+fulfilment audit). evaluation/metrics.py's evaluate() computes ndcg/recall
 per query but never returns the underlying ranked product_id list -- reproducible by re-running
 each experiment, but not inspectable without doing so.
 

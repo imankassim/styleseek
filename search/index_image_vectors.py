@@ -6,8 +6,8 @@ skipped, not embedded as a blank/zero vector.
 
 Usage: python search/index_image_vectors.py [limit]
   limit: only index this many products (for fast iteration); omit for the full catalogue
-  (~44,441 images, measured ~34 minutes on this machine, threads=4 — see
-  docs/progress.md's visual similarity extension notes).
+  (~44,441 images, measured ~34 minutes on this machine, threads=4, in an isolated benchmark —
+  longer in practice under concurrent load, see docs/model_cards/visual_similarity_v1.md).
 """
 
 import sys

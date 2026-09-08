@@ -69,7 +69,9 @@ curl -s "http://localhost:8000/search?q=purple+waterproof+tuxedo" | python -m js
 Returns 24 confident-looking results (purple items — colour filter matched) with **no** signal
 that "waterproof tuxedo" wasn't actually found. Architecture §2.3 asks for "controlled
 alternatives and relaxed constraints shown transparently"; this doesn't do that yet — vector kNN
-has no concept of "no match." See `docs/progress.md`'s brief-fulfilment audit section.
+has no concept of "no match." See `tests/search_regression/test_search_regression.py`'s
+`test_no_result_query_behaviour_is_a_known_gap_not_a_silent_regression`, which tracks this
+plainly as a known, deliberately unfixed gap rather than a silent regression.
 
 ## 2. Session personalisation (Stage 14) — bounded, never overriding intent
 
@@ -124,5 +126,5 @@ outage and confirm the response says so honestly rather than silently degrading.
   baselines, saved as inspectable files rather than only summarised metrics.
 - `monitoring/report.py` — real p50/p95/p99 latency, fallback rate, zero-result rate from actual
   traffic (`python monitoring/report.py`).
-- `docs/progress.md`'s "Brief-fulfilment audit" section — the honest gap list this script's
-  sections 1's two "known gap" demos come from.
+- `docs/risk_register.md` — every risk/assumption behind this project, resolved or still open,
+  with evidence — the source for this script's two "known gap" demos above.

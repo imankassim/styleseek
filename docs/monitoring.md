@@ -52,7 +52,7 @@ Cross-referencing architecture §10's availability/fallback table against what's
   build`. Stateless.
 - **OpenSearch index corrupted or deleted**: rebuild from Postgres (the source of truth) with
   `python search/index.py` (BM25) and `python search/index_vectors.py` (vectors, ~80 minutes for
-  the full catalogue — see `docs/progress.md`), then re-run
+  the full catalogue), then re-run
   `experiments/EXP14_synonym_expansion/run.py` for the synonym-enabled index actually served.
   Nothing is lost: OpenSearch only ever holds a denormalised copy of Postgres.
 - **Postgres data corrupted**: this prototype has no separate backup/restore procedure beyond
