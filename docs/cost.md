@@ -42,13 +42,14 @@ recurring paid cost introduced.
 | `styleseek_products_v1` | 44,446 | 10 MB |
 | `styleseek_products_v2_synonyms` (live BM25) | 44,446 | 10.1 MB |
 | `styleseek_products_v3_vectors` (live semantic, 3 representations) | 44,446 | 404.8 MB |
-| `styleseek_products_v5_image_vectors` (visual similarity) | growing to 44,441 | ~230 MB once complete (linear extrapolation from a partial build) |
+| `styleseek_products_v5_image_vectors` (visual similarity) | 44,441 (complete) | 178.6 MB |
 
 Vector indices dominate storage, not the operational catalogue data itself — expected, since
 each product carries multiple 384-dim or 512-dim float vectors versus a handful of scalar
-fields. `styleseek_products_v1` (the pre-synonym base index) is no longer needed by anything
-live and could be deleted to reclaim 10 MB; kept for now as it's negligible against the vector
-indices' footprint and was never a decision point worth revisiting on its own.
+fields. Total OpenSearch footprint: ~603.5 MB across all four indices. `styleseek_products_v1`
+(the pre-synonym base index) is no longer needed by anything live and could be deleted to
+reclaim 10 MB; kept for now as it's negligible against the vector indices' footprint and was
+never a decision point worth revisiting on its own.
 
 **Request volume**: 653+ real `/search` requests logged during development/testing (see
 `monitoring/report.py`) — all from this project's own testing, not genuine independent shoppers
