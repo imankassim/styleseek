@@ -1,0 +1,31 @@
+# Local convenience only (Stage 15) -- Postgres and OpenSearch themselves stay managed free-tier
+# services (Neon, Bonsai; see docs/risk_register.md "Complex local setup"), not containerised
+# here. This just runs the backend and frontend images against those, so someone new to the
+# project can start both with one command instead of two separate `python run.py` / `npm run
+# dev` terminals.
+#
+# Usage: create a `.env` file next to this one with DATABASE_URL and OPENSEARCH_URL (same
+# values as database/.env), then: docker compose up --build
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OPENSEARCH_URL: ${OPENSEARCH_URL}
+      CORS_ORIGINS: http://localhost:3000
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
