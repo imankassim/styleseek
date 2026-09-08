@@ -36,8 +36,8 @@ Status values: `Not started` · `In progress` · `Accepted` · `Rejected`.
 | EXP41 | Tree-based pointwise model | Learned baseline | Rejected | ndcg@10 0.188 — more model capacity made it worse, confirming EXP40's finding was about data volume, not model choice. See `experiments/EXP41_tree_pointwise_model/README.md`. |
 | EXP43 | LightGBM LambdaRank | Ranking candidate | Rejected (for now) | ndcg@10 0.252 — same result a third time with a ranking-aware objective. G8: learned ranking does not yet beat simpler ranking. See `experiments/EXP43_lightgbm_lambdarank/README.md`. |
 | EXP44 | Ranker with behavioural features | Context experiment | Rejected before running | Only synthetic (test-harness) click data exists, no genuine shopper behaviour. See `discarded/EXP44_behavioural_features_ranker/README.md`. |
-| EXP50 | Collaborative filtering | Optional recommendation experiment | Not started | |
-| EXP51 | Two-tower model | Optional sparse-data investigation | Not started | |
+| EXP50 | Collaborative filtering | Optional recommendation experiment | Rejected before running | Checked feasibility directly (2026-09-08): only 4 distinct products have ever been clicked, across 47 sessions, and every single session clicked at most 1 distinct product — 0 sessions have the 2+ overlapping-item co-click signal collaborative filtering fundamentally needs. Not "weak data" (Stage 13's finding for EXP40/41/43) but no signal at all to compute from. Same category as EXP21 (rejected before running once the data reality was checked). |
+| EXP51 | Two-tower model | Optional sparse-data investigation | Rejected before running | Same evidence as EXP50 — a two-tower model needs substantially more positive/negative interaction pairs than 61 total click events across 4 products, and the data doesn't reflect genuine independent shoppers (architecture §16 "too little genuine interaction data"). |
 
 ## Log
 
@@ -58,6 +58,15 @@ Chronological one-line entries as experiments start/finish, newest last.
   relevance-judgment ground truth for "does this reflect a shopper's session preference," only
   the structural guarantees the gate actually asks for (never overrides explicit intent, reliable
   cold start). See `backend/app/personalization.py` and `docs/progress.md` Stage 14 row. EXP50
-  (collaborative filtering) and EXP51 (two-tower) remain deliberately "Not started": both need
-  more genuine interaction volume than this project has, per the Stage 13 finding they'd hit the
-  same wall EXP40/41/43 did.
+  (collaborative filtering) and EXP51 (two-tower) were, at that point, deliberately "Not
+  started": both need more genuine interaction volume than this project has, per the Stage 13
+  finding they'd hit the same wall EXP40/41/43 did.
+- 2026-09-08 — Checked EXP50/EXP51's feasibility directly rather than leaving them indefinitely
+  "Not started": queried `event` for actual click volume and found only 4 distinct products ever
+  clicked across 47 sessions, every session at most 1 distinct product — no session has the
+  overlapping multi-item signal either technique fundamentally needs. Rejected before running,
+  same category as EXP21.
+- 2026-09-08 — Visual similarity (architecture §12 journey 16) built and shipped as a genuinely
+  optional extension after Stage 16's conclusion, at the user's direction — not an EXP-numbered
+  comparison (no relevance ground truth exists for "is this visually similar"), evaluated
+  qualitatively instead. See `docs/model_cards/visual_similarity_v1.md`.
