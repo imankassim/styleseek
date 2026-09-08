@@ -61,14 +61,22 @@ fixed one real bug in the process — see the connection-resilience commit
 documented elsewhere in this file. Smaller items checked and not yet acted on, so they don't
 silently look "done" by omission:
 
-- **§3.2 NFR "Cost"** ("Search, model and infrastructure costs are measured where available and
-  discussed alongside quality") — never explicitly measured or written up. Neon/Bonsai are
-  managed services chosen for their free/low tiers, but no cost figure or discussion exists
-  anywhere in the docs.
-- **§3.3 "Catalogue coverage and diversity for broad queries"** — not measured as its own metric.
-  Duplicate control (Stage 12) and the personalisation window (Stage 14) touch diversity
-  indirectly; nothing reports what fraction of the 44,446-product catalogue actually surfaces
-  across a broad query workload.
+- **§3.2 NFR "Cost"** — written up (2026-09-08), `docs/cost.md`: storage usage for both managed
+  services (Postgres 68MB; OpenSearch ~547MB once the image vector index finishes, vector
+  indices dominating over the base lexical/catalogue data), confirmation no paid API is used
+  anywhere in the live system (the one deliberately-skipped extension, conversational discovery,
+  would have been the first). Exact £ billing wasn't accessible to verify (connection-string
+  access only, not account/billing access) — stated as an explicit limitation of the write-up
+  rather than a number invented to fill the gap.
+- **§3.3 "Catalogue coverage and diversity for broad queries"** — measured (2026-09-08),
+  `evaluation/catalogue_coverage.py`. 12 broad, single-category queries ("dress", "shoes",
+  "bag", etc.) each returned 24 results, 100% distinct titles per query except "bag" (3
+  title-duplicates confirmed genuine — same product name in 4 different colourways, not a
+  Stage 12 dedup regression), and zero product overlap *between* different broad queries'
+  result pages (288/288 distinct across the batch, the actual ceiling given 24 results/query).
+  Whether every product is reachable by *some* query eventually (long-tail reachability) is a
+  larger question this doesn't answer, stated plainly in the script's own output rather than
+  implied by a bare percentage.
 - **§18 "Evaluation harness and saved result lists"** — the harness exists and is used throughout
   (`evaluation/metrics.py`); the *lists* (raw per-query ranked product IDs) were never saved as
   files, only summarised as metrics in each experiment's README/register entry. Reproducible by
