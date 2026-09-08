@@ -73,21 +73,21 @@ in CI and why.
 
 ## Results, honestly
 
-The frozen configuration ([ADR-3](docs/decisions/3-freeze-serving-configuration.md)) scored
-**ndcg@10 = 0.660, recall@50 = 0.667** on a genuinely held-out 3-query test split never used to
-tune anything — read with the small-n caveat spelled out in
-[`evaluation/final_evaluation.md`](evaluation/final_evaluation.md), which is more important than
-the number itself. Development-time comparisons (used to *choose* this configuration, not to
-prove it): tuned BM25 alone reached ndcg@10 0.755 over a PostgreSQL full-text baseline's 0.355;
-hybrid fusion added +1.3% ndcg@10 and +4.0% recall@50 over BM25 alone. Full trail:
-[`experiments/experiment_register.md`](experiments/experiment_register.md).
+Six configurations were measured before picking one. Weighted 90/10 lexical/semantic fusion beat
+tuned BM25 alone on both ndcg@10 and recall@50 at once — the only one of the three fusion
+strategies tried that managed that — and is what's live today (`hybrid_weighted_fusion_v1`):
 
-**Rejected along the way, and why** (kept, not deleted — architecture's negative-result policy):
-BM25 fuzzy matching (fixed typos, broke everything else), naive RRF and equal-weight fusion
-(both regressed ranking quality despite improving recall), category/occasion as hard filters
+![StyleSeek search configurations compared — a bar chart of ndcg@10 for six configurations (PostgreSQL full-text 0.355, vector-only 0.293, tuned BM25 0.755, RRF fusion 0.549, equal-weight fusion 0.673, weighted fusion 0.765), with the weighted fusion bar highlighted in green and labelled "chosen for production"](docs/model_performance.png)
+
+On a genuinely held-out 3-query test split — never used to tune anything — that same
+configuration scored ndcg@10 0.660, recall@50 0.667; read with the small-n caveat in
+[`evaluation/final_evaluation.md`](evaluation/final_evaluation.md), which matters more than the
+number. **Rejected along the way** (kept, not deleted — architecture's negative-result policy):
+BM25 fuzzy matching (fixed typos, broke everything else), category/occasion as hard filters
 (looked safe, measurably wasn't), three learned-ranking model families (all underperformed the
 simpler baseline — not enough training data yet), parallel retrieval via a thread pool (measured
-*slower* than sequential on this platform). Full list with numbers:
+*slower* than sequential on this platform). Full trail with numbers:
+[`experiments/experiment_register.md`](experiments/experiment_register.md) ·
 [`evaluation/final_evaluation.md`](evaluation/final_evaluation.md#negative-results-carried-into-this-conclusion).
 
 ## How this was built
