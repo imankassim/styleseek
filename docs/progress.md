@@ -51,6 +51,36 @@ after Stage 16 concluded.
   meets the architecture's "safe structured constraints" exit outcome. A scope boundary, not an
   oversight — see `experiments/experiment_register.md`'s EXP20 row.
 
+## Brief-fulfilment audit (2026-09-08)
+
+Checked the live system directly against `STYLESEE1.docx` (extracted its full text/tables for a
+line-by-line comparison, not just against the markdown mirror) at the user's request. Found and
+fixed one real bug in the process — see the connection-resilience commit
+(`backend/app/db.py`/`routers/search.py`, 2026-09-08). Everything in §2.1 ("what will be built"),
+§2.2 ("what will not"), the 16-stage plan, and the stage decision gates is delivered as
+documented elsewhere in this file. Smaller items checked and not yet acted on, so they don't
+silently look "done" by omission:
+
+- **§3.2 NFR "Cost"** ("Search, model and infrastructure costs are measured where available and
+  discussed alongside quality") — never explicitly measured or written up. Neon/Bonsai are
+  managed services chosen for their free/low tiers, but no cost figure or discussion exists
+  anywhere in the docs.
+- **§3.3 "Catalogue coverage and diversity for broad queries"** — not measured as its own metric.
+  Duplicate control (Stage 12) and the personalisation window (Stage 14) touch diversity
+  indirectly; nothing reports what fraction of the 44,446-product catalogue actually surfaces
+  across a broad query workload.
+- **§18 "Evaluation harness and saved result lists"** — the harness exists and is used throughout
+  (`evaluation/metrics.py`); the *lists* (raw per-query ranked product IDs) were never saved as
+  files, only summarised as metrics in each experiment's README/register entry. Reproducible by
+  re-running, not currently inspectable without doing so.
+- **§18 "Final held-out evaluation and demonstration script"** — the held-out evaluation exists
+  (`evaluation/final_evaluation.md`); no separate scripted stakeholder walkthrough exists beyond
+  the README's quick start.
+- **FR-06** ("The ranker can fall back to fusion...") — the semantic→lexical half is built and
+  tested; the ranker→fusion half was never exercised because no learned ranker was ever promoted
+  to serving (Stage 13, G8 said no) — there's nothing live to "fall back" from yet. Not a gap
+  against what was actually built, just not a scenario that currently applies.
+
 ## Notes / open items carried forward
 
 - Catalogue licence still not confirmed on the Kaggle dataset page — see
@@ -70,14 +100,31 @@ after Stage 16 concluded.
   3000) — both need `database/.env` (or `backend/.env`) with `DATABASE_URL` and `OPENSEARCH_URL`
   set. Rebuild the search index after a catalogue change with `python search/index.py` (base
   index) and `python experiments/EXP14_synonym_expansion/run.py` (the one actually served).
-- Known gap, deliberately not fixed yet, and worse than it was at Stage 8: `/search` always
-  returns *something*, even for a genuinely no-result query — vector kNN has no concept of "no
-  match" at all (BM25 alone could at least occasionally score zero). See
-  `tests/search_regression/test_search_regression.py`. **Still open after Stage 12**: that
-  stage's eligibility work was stock/size (a product either qualifies or doesn't) and duplicate
-  control, not a minimum-relevance score cutoff — the two are different problems. A relevance
-  threshold hasn't been scheduled to a specific later stage; revisit if it becomes a real
-  nuisance rather than a theoretical gap.
+- **Known gap, checked against the brief directly (2026-09-08) and confirmed still open**:
+  architecture §2.3 names "No-result recovery" as its own target journey — example query
+  "purple waterproof tuxedo" — with the requirement "avoid random products; show controlled
+  alternatives and relaxed constraints." Live behaviour doesn't do this: that exact query
+  returns 24 confident-looking results (purple handbags, watches, wallets — anything matching
+  the colour hard filter) with no signal to the shopper that these are a fallback, not a match.
+  Root cause as previously noted: vector kNN has no concept of "no match" at all (BM25 alone
+  could at least occasionally score zero), and Stage 12's eligibility work was stock/size/dedup,
+  not a minimum-relevance cutoff or an explicit "no good match, here are alternatives" UI/API
+  treatment — different problems. Not fixed here; flagging plainly is more useful than a
+  half-built fix. See `tests/search_regression/test_search_regression.py`'s
+  `test_no_result_query_behaviour_is_a_known_gap_not_a_silent_regression`, which already encodes
+  this as a named, tracked gap rather than silently passing.
+- **Similarly, "Typo recovery" (§2.3, example "grren satn midi drss") is not functionally
+  delivered** — this is a known, evidence-based trade-off (EXP13 fixed the one typo query but
+  regressed every other type, Stage 8), not an oversight, but worth stating plainly against the
+  brief's journey list rather than only as an experiment-register rejection: a shopper who
+  misspells currently gets poor, largely unrelated results.
+- **"range"/fit attribute extraction (§7's example response contract includes `"range":
+  "petite"`) was never implemented** — `QueryInterpretation.range` exists in the schema but is
+  always `null`; the catalogue has no petite/plus/regular fit field to extract from
+  (`backend/app/query_understanding.py`'s comment already noted this), so two of §2.3's five
+  worked examples ("petite green wedding guest dress", "petite black work trousers under £40")
+  only partially match what the system actually does with them — colour/price/size, but not the
+  range term itself.
 - Live `/search` now serves hybrid BM25+vector fusion (`hybrid_weighted_fusion_v1`, Stage 11).
   Vector index: `styleseek_products_v3_vectors` (title/metadata/structured vector fields), built
   by `python search/index_vectors.py`. Rebuilding the full catalogue's embeddings takes roughly
