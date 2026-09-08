@@ -29,7 +29,7 @@ def list_products(
     max_price: float | None = Query(default=None, ge=0),
     in_stock_only: bool = False,
     sort: str = Query(default="relevance", pattern="^(relevance|price_asc|price_desc)$"),
-    limit: int = Query(default=24, le=100),
+    limit: int = Query(default=24, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     conn: Connection = Depends(get_connection),
 ) -> ProductListResponse:

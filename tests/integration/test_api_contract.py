@@ -117,6 +117,16 @@ def test_product_list_in_stock_only_total_is_consistent(client):
     assert 0 < body["total"] <= unfiltered_total
 
 
+def test_product_list_rejects_non_positive_limit(client):
+    """Input validation (architecture §11/§15 'validate ... numeric ranges') — limit only had an
+    upper bound (le=100), so limit=0 or a negative value reached a bound SQL `LIMIT %s` param and
+    Postgres itself rejected it, surfacing as an unhandled 500 instead of a clean 422."""
+    resp = client.get("/products", params={"limit": 0})
+    assert resp.status_code == 422
+    resp = client.get("/products", params={"limit": -5})
+    assert resp.status_code == 422
+
+
 def test_categories_endpoint(client):
     resp = client.get("/categories")
     assert resp.status_code == 200
