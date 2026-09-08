@@ -4,7 +4,7 @@ Source: `STYLESEE1.docx` §16. Reviewed at each stage decision gate (architectur
 
 | Risk / assumption | Impact | Mitigation or evidence | Status |
 |---|---|---|---|
-| Too little genuine interaction data | Personalised and two-tower models may appear convincing without being valid. | Use human judgments and session features first; label synthetic behaviour; retain advanced models as experiments. | Open |
+| Too little genuine interaction data | Personalised and two-tower models may appear convincing without being valid. | Use human judgments and session features first; label synthetic behaviour; retain advanced models as experiments. | **Confirmed directly at Stage 13**: three learned-ranking model families (EXP40/41/43) all substantially underperformed the hand-tuned fusion baseline on 178 training rows — retained as documented, rejected experiments per the prescribed mitigation, not shipped. Still open for Stage 14 (personalisation). |
 | Poor catalogue metadata | Semantic and lexical retrieval both degrade. | Quality gates, controlled vocabulary, provenance and error analysis. | Open |
 | Popularity bias | Already popular products receive more exposure and clicks. | Separate relevance from popularity, cap soft boosts, monitor catalogue exposure. | Open |
 | Position-biased clicks | Top-ranked products receive more clicks regardless of inherent relevance. | Do not equate raw clicks with relevance; use judgments and analyse exposure. | Open |

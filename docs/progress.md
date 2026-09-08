@@ -19,7 +19,7 @@ progress from git log alone.
 | 10 | Add semantic retrieval | Done | G6 met — title-only embeddings (EXP22, `BAAI/bge-small-en-v1.5` via fastembed) are the best representation; not competitive as a standalone ranker (ndcg@10 0.293 vs BM25's 0.755) but found relevant candidates BM25 missed entirely on 5/15 queries (EXP30). 93/93 tests pass |
 | 11 | Build hybrid retrieval | Done | G7 met — EXP34 (90/10 weighted BM25+vector fusion) beats BM25 alone on ndcg@10 (+1.3%) and recall@50 (+4.0%) simultaneously, sub-second latency (~650ms). Live `/search` model version `hybrid_weighted_fusion_v1`, two-tier fallback. 95/95 tests pass |
 | 12 | Guarantee safety | Done | Size extraction added to query understanding; stock/size eligibility (unconditional `in_stock` filter, per-size stock confirmed against Postgres) and post-fusion duplicate control ((title, category, colour) dedup) wired into live `/search`. 110/110 tests pass |
-| 13 | Train learned ranking | Not started | G8 |
+| 13 | Train learned ranking | Done | G8 result: **no** — EXP40/41/43 (linear, trees, LightGBM LambdaRank) all scored well below EXP34's hybrid fusion (0.703) on held-out validation, consistently (0.253/0.188/0.252). 178 training rows isn't enough data yet. EXP34 remains the live ranker; feature pipeline kept ready. 120/120 tests pass |
 | 14 | Add bounded context | Not started | G9 |
 | 15 | Operationalise | Not started | G10 |
 | 16 | Conclude | Not started | G11 |

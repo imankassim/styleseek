@@ -32,10 +32,10 @@ Status values: `Not started` · `In progress` · `Accepted` · `Rejected`.
 | EXP32 | RRF hybrid retrieval | Rank-fusion baseline | Rejected | ndcg@10 0.549 (vs BM25 alone 0.755) — recall improved but ranking quality regressed 27% relative; equal-rank trust between a strong and a weak ranker doesn't work. See `experiments/EXP32_rrf_hybrid/README.md`. |
 | EXP33 | Normalised score fusion | Fusion alternative | Accepted | ndcg@10 0.673 — better than RRF but still below BM25 alone; preserving score magnitude helps, equal weighting still doesn't. See `experiments/EXP33_normalised_score_fusion/README.md`. |
 | EXP34 | Weighted score fusion | Fusion alternative | **Accepted — promoted to serving** | 90/10 lexical/semantic beats BM25 alone on ndcg@10 (0.765, +1.3%) AND recall@50 (0.721, +4.0%) simultaneously. Live `/search` model version `hybrid_weighted_fusion_v1`. See `experiments/EXP34_weighted_score_fusion/README.md`. |
-| EXP40 | Simple pointwise model | Learned baseline | Not started | |
-| EXP41 | Tree-based pointwise model | Learned baseline | Not started | |
-| EXP43 | LightGBM LambdaRank | Ranking candidate | Not started | |
-| EXP44 | Ranker with behavioural features | Context experiment | Not started | |
+| EXP40 | Simple pointwise model | Learned baseline | Rejected | ndcg@10 0.253 vs EXP34's 0.703 (val split, n=4) — 178 training rows isn't enough. See `experiments/EXP40_simple_pointwise_model/README.md`. |
+| EXP41 | Tree-based pointwise model | Learned baseline | Rejected | ndcg@10 0.188 — more model capacity made it worse, confirming EXP40's finding was about data volume, not model choice. See `experiments/EXP41_tree_pointwise_model/README.md`. |
+| EXP43 | LightGBM LambdaRank | Ranking candidate | Rejected (for now) | ndcg@10 0.252 — same result a third time with a ranking-aware objective. G8: learned ranking does not yet beat simpler ranking. See `experiments/EXP43_lightgbm_lambdarank/README.md`. |
+| EXP44 | Ranker with behavioural features | Context experiment | Rejected before running | Only synthetic (test-harness) click data exists, no genuine shopper behaviour. See `discarded/EXP44_behavioural_features_ranker/README.md`. |
 | EXP50 | Collaborative filtering | Optional recommendation experiment | Not started | |
 | EXP51 | Two-tower model | Optional sparse-data investigation | Not started | |
 
