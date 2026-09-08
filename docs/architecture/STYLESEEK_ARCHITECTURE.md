@@ -1,7 +1,7 @@
 # StyleSeek — Project Journey, Task Definition and Technical Architecture
 
-> Markdown companion to `STYLESEE1.docx`, the canonical source document. If this file and the
-> `.docx` ever disagree, the `.docx` wins — update this file to match.
+> Originally a markdown companion to `STYLESEE1.docx`; the `.docx` has since been removed from
+> the repository, so this file is now the sole, canonical source document.
 >
 > A complete companion document defining what will be built, why it exists, how the parts
 > connect, and how the solution progresses from a static page to an evaluated ML search service.
