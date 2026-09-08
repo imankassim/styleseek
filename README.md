@@ -1,13 +1,11 @@
 # StyleSeek
 
-An original fashion e-commerce search **research prototype** — not a real store, not a copy of
-any retailer's branding or assets. It exists to answer one question with evidence rather than
-assumption:
+An original fashion e-commerce search **research prototype** used to answer:
 
 > To what extent does hybrid lexical and semantic retrieval, followed by learning-to-rank,
 > improve fashion-product search relevance compared with a tuned BM25 baseline?
 
-Built stage by stage from a static page to a hybrid BM25 + vector search service with query
+Built from a static page to a hybrid BM25 + vector search service with query
 understanding, safety filtering, and bounded personalisation — each stage measured against the
 one before it, with rejected approaches kept and documented rather than deleted. See
 [`docs/project_charter.md`](docs/project_charter.md) for the full research question and scope,
@@ -17,8 +15,7 @@ for the governing architecture this was built against.
 ## What's actually here
 
 - **Frontend**: Next.js — search, category browsing, product detail, basket simulation.
-- **Backend**: FastAPI — `/search`, `/products`, `/events`, all typed, all with an honest
-  `model_version`/`fallback_used` in every search response.
+- **Backend**: FastAPI — `/search`, `/products`, `/events`.
 - **Data**: PostgreSQL (source of truth, 44,446 real products from a Kaggle dataset, MIT
   licensed) + OpenSearch (BM25 lexical + vector kNN semantic index).
 - **Search**: BM25 (boosted fields, synonym expansion) fused with vector semantic retrieval
@@ -28,7 +25,6 @@ for the governing architecture this was built against.
 - **What's *not* live**: a learned re-ranker. Three model families were tried and measurably
   underperformed the hand-tuned fusion baseline on the data available — see
   [`evaluation/final_evaluation.md`](evaluation/final_evaluation.md#negative-results-carried-into-this-conclusion).
-  That's a finding, not a gap that was skipped.
 - **Visual similarity** ("Similar styles" on the product page) — CLIP image embeddings, a
   genuinely optional extension beyond the frozen core plan. See
   [`docs/model_cards/visual_similarity_v1.md`](docs/model_cards/visual_similarity_v1.md) for what
@@ -71,7 +67,7 @@ python monitoring/report.py                         # real /search latency, fall
 test on every push — see [`docs/monitoring.md`](docs/monitoring.md) for what's and isn't covered
 in CI and why.
 
-## Results, honestly
+## Results:
 
 Six configurations were measured before picking one. Weighted 90/10 lexical/semantic fusion beat
 tuned BM25 alone on both ndcg@10 and recall@50 at once — the only one of the three fusion
@@ -94,9 +90,7 @@ simpler baseline — not enough training data yet), parallel retrieval via a thr
 
 Baseline first, measure before promoting, keep negative results, hard constraints before soft
 preference — see [`docs/architecture/STYLESEEK_ARCHITECTURE.md`](docs/architecture/STYLESEEK_ARCHITECTURE.md#4-architecture-principles)
-for the full methodology this followed. Sixteen stages, each with its own decision gate; the
-complete stage-by-stage record (what shipped, what was measured, what gate it had to clear) is
-in [`docs/progress.md`](docs/progress.md).
+
 
 ## Documentation map
 
@@ -138,5 +132,5 @@ docs/            architecture, decisions, model cards, data sheets, ethics, prog
 Catalogue data: `paramaggarwal/fashion-product-images-small` (Kaggle), confirmed **MIT**
 licensed — see [`docs/data_sheets/catalogue_data_sheet.md`](docs/data_sheets/catalogue_data_sheet.md).
 Price, stock quantity and size runs are synthetic and flagged as such in the schema, not
-presented as real. No ASOS or other retailer branding, imagery, or proprietary code is used
+presented as real. No retailer branding, imagery, or proprietary code is used
 anywhere in this project.
