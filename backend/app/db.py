@@ -20,7 +20,20 @@ pool: ConnectionPool | None = None
 
 def open_pool() -> None:
     global pool  # noqa: PLW0603
-    pool = ConnectionPool(conninfo=get_database_url(), open=True, min_size=1, max_size=5)
+    # check=check_connection validates a connection is actually alive before handing it out,
+    # discarding and replacing it otherwise -- found necessary in practice (2026-09-08): Neon's
+    # serverless Postgres can drop an idle pooled connection server-side faster than this pool's
+    # own max_idle housekeeping notices, which without this check surfaced as an unhandled
+    # psycopg.OperationalError deep inside a request handler (see the docstring on
+    # _apply_eligibility_and_diversity's rollback try/except in routers/search.py, added at the
+    # same time as defence in depth for the narrower race this doesn't close).
+    pool = ConnectionPool(
+        conninfo=get_database_url(),
+        open=True,
+        min_size=1,
+        max_size=5,
+        check=ConnectionPool.check_connection,
+    )
 
 
 def close_pool() -> None:

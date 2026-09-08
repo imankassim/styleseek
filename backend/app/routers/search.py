@@ -113,9 +113,16 @@ def _apply_eligibility_and_diversity(
             # unavailable: use non-personalised ranking" — a DB hiccup on this optional signal
             # must never take down a search request that otherwise succeeded.
             logger.warning("Session preference lookup failed, skipping personalisation", exc_info=True)
-            conn.rollback()  # the failed query leaves the connection's transaction aborted;
-            # clear it so the still-to-come search_request logging insert on this same
-            # pooled connection isn't rejected too.
+            try:
+                # The failed query leaves the connection's transaction aborted; clear it so the
+                # still-to-come search_request logging insert on this same pooled connection
+                # isn't rejected too. If the connection is lost outright (not just aborted --
+                # confirmed happening in practice, see db.py's open_pool docstring) rollback()
+                # itself raises; swallow that too rather than letting a recovery attempt become
+                # a second, worse failure than the one it was recovering from.
+                conn.rollback()
+            except Exception:  # noqa: BLE001
+                logger.warning("Connection rollback also failed after session lookup failure", exc_info=True)
             preferred_colour = None
         ranked_ids = apply_session_colour_boost(ranked_ids, docs_by_id, preferred_colour)
 
@@ -335,17 +342,25 @@ def search(
             fallback_used = True
 
     latency_ms = int((time.perf_counter() - started_at) * 1000)
-    _log_search_request(
-        conn,
-        search_request_id=search_request_id,
-        session_id=session_id,
-        query=query,
-        interpretation=interpretation.model_dump() if interpretation else None,
-        model_version=model_version,
-        fallback_used=fallback_used,
-        result_count=len(results),
-        latency_ms=latency_ms,
-    )
+    try:
+        _log_search_request(
+            conn,
+            search_request_id=search_request_id,
+            session_id=session_id,
+            query=query,
+            interpretation=interpretation.model_dump() if interpretation else None,
+            model_version=model_version,
+            fallback_used=fallback_used,
+            result_count=len(results),
+            latency_ms=latency_ms,
+        )
+    except Exception:  # noqa: BLE001 -- same principle as architecture §10's "Event collector
+        # unavailable: do not block search response" applied to this request's own logging
+        # insert: the shopper already has real, correctly-computed results by this point, and
+        # losing the analytics row for one request is a far smaller problem than losing the
+        # response entirely. A subsequent /events POST referencing this search_request_id would
+        # just hit ForeignKeyViolation and be silently skipped (events.py already handles that).
+        logger.warning("Failed to log search_request, returning results anyway", exc_info=True)
 
     return SearchResponse(
         search_request_id=search_request_id,

@@ -337,6 +337,24 @@ def test_search_falls_back_to_non_personalised_when_session_feature_lookup_fails
     assert len(resp.json()["results"]) > 0
 
 
+def test_search_returns_results_even_if_request_logging_fails(client, monkeypatch):
+    """Failure injection, same principle as architecture §10 'Event collector unavailable: do
+    not block search response' applied to this request's own search_request insert -- found via
+    a real live bug (2026-09-08): a lost pooled connection (Neon dropping an idle connection
+    faster than the pool's own housekeeping noticed) surfaced as an unhandled 500 from deep
+    inside this insert, discarding results that had already been computed correctly."""
+    import app.routers.search as search_router
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("simulated logging failure")
+
+    monkeypatch.setattr(search_router, "_log_search_request", _boom)
+
+    resp = client.get("/search", params={"q": "nike"})
+    assert resp.status_code == 200
+    assert len(resp.json()["results"]) > 0
+
+
 def test_search_uses_hybrid_fusion_by_default(client):
     resp = client.get("/search", params={"q": "black nike shoes"})
     assert resp.status_code == 200
